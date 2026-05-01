@@ -162,45 +162,6 @@
       gap: 10px;
     }
 
-    .section-icon {
-      position: relative;
-      width: 22px;
-      height: 22px;
-      flex: 0 0 22px;
-      border: 2px solid var(--accent);
-      border-radius: 6px;
-    }
-
-    .section-icon::after {
-      content: "";
-      position: absolute;
-      inset: 5px;
-      border-top: 2px solid var(--accent);
-      border-bottom: 2px solid var(--accent);
-    }
-
-    .section-icon.user {
-      border-radius: 50%;
-    }
-
-    .section-icon.user::after {
-      inset: auto;
-      left: -3px;
-      right: -3px;
-      bottom: -9px;
-      height: 10px;
-      border: 2px solid var(--accent);
-      border-radius: 10px 10px 0 0;
-      border-bottom: 0;
-    }
-
-    .section-icon.file::after {
-      inset: 5px 4px auto;
-      height: 8px;
-      border-top: 2px solid var(--accent);
-      border-bottom: 2px solid var(--accent);
-    }
-
     .form-grid {
       display: grid;
       min-width: 0;
@@ -235,9 +196,11 @@
 
     input[type="month"] {
       display: block;
-      max-width: 100%;
+      width: 100%;
       min-width: 0;
-      appearance: auto;
+      max-width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     input:focus,
@@ -688,10 +651,9 @@
 
     <main>
       <section class="card" aria-labelledby="lessonTitle">
-        <h2 id="lessonTitle" class="section-title"><span class="section-icon" aria-hidden="true"></span>講師業務</h2>
+        <h2 id="lessonTitle" class="section-title">講師業務</h2>
         <div class="form-grid">
           <div class="field">
-            <div class="label">日付</div>
             <div id="lessonAutoDate" class="muted">今日の日付で自動保存します。</div>
             <input id="lessonDate" type="hidden">
           </div>
@@ -722,12 +684,12 @@
       </section>
 
       <section class="card" aria-labelledby="workTitle">
-        <h2 id="workTitle" class="section-title"><span class="section-icon user" aria-hidden="true"></span>講師外業務</h2>
+        <h2 id="workTitle" class="section-title">講師外業務</h2>
         <div id="workArea"></div>
       </section>
 
       <section class="card" aria-labelledby="monthlyTitle">
-        <h2 id="monthlyTitle" class="section-title"><span class="section-icon file" aria-hidden="true"></span>月次出力</h2>
+        <h2 id="monthlyTitle" class="section-title">月次出力</h2>
         <div class="form-grid">
           <div class="field">
             <label for="targetMonth">対象月</label>
