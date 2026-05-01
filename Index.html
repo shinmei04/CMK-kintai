@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>勤怠・請求メモ</title>
+  <style>
+    :root {
+      --bg: #f4f5f4;
+      --card: #ffffff;
+      --text: #1f2525;
+      --muted: #707977;
+      --line: #dde3e1;
+      --accent: #008b86;
+      --accent-dark: #007571;
+      --accent-soft: #eaf7f6;
+      --warning: #c62828;
+      --warning-bg: #fdeaea;
+      --danger: #c62828;
+      --danger-bg: #fdeaea;
+      --shadow: 0 8px 24px rgba(31, 37, 37, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.95), rgba(244,245,244,0.98) 42%),
+        var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .app {
+      width: min(100%, 690px);
+      margin: 0 auto;
+      padding: 18px 16px 28px;
+      overflow-x: hidden;
+    }
+
+    .app-header {
+      display: grid;
+      gap: 10px;
+      padding: 12px 0 10px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.45rem;
+      line-height: 1.25;
+      letter-spacing: 0;
+      font-weight: 750;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 1.22rem;
+      letter-spacing: 0;
+      font-weight: 750;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 1rem;
+    }
+
+    .today {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .today::before {
+      content: "▣";
+      margin-right: 6px;
+      color: var(--accent);
+      font-size: 0.9rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 96px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--warning-bg);
+      color: var(--danger);
+      font-size: 0.88rem;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .status-badge.active {
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+    }
+
+    .alert {
+      padding: 10px 12px;
+      border: 1px solid #f1d18a;
+      border-radius: 8px;
+      background: var(--warning-bg);
+      color: var(--warning);
+      font-size: 0.92rem;
+      font-weight: 650;
+    }
+
+    .test-mode {
+      padding: 10px 12px;
+      border: 1px solid #d8dee9;
+      border-radius: 8px;
+      background: #f7f8fa;
+      color: #4b5563;
+      font-size: 0.9rem;
+      font-weight: 650;
+    }
+
+    .card {
+      margin: 16px 0;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-icon {
+      position: relative;
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .section-icon::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border-top: 2px solid var(--accent);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .section-icon.user {
+      border-radius: 50%;
+    }
+
+    .section-icon.user::after {
+      inset: auto;
+      left: -3px;
+      right: -3px;
+      bottom: -9px;
+      height: 10px;
+      border: 2px solid var(--accent);
+      border-radius: 10px 10px 0 0;
+      border-bottom: 0;
+    }
+
+    .section-icon.file::after {
+      inset: 5px 4px auto;
+      height: 8px;
+      border-top: 2px solid var(--accent);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .form-grid {
+      display: grid;
+      min-width: 0;
+      gap: 13px;
+    }
+
+    .field {
+      display: grid;
+      min-width: 0;
+      gap: 7px;
+    }
+
+    .field label,
+    .label {
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 650;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px solid #d9d9d7;
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    input[type="month"] {
+      display: block;
+      max-width: 100%;
+      min-width: 0;
+      appearance: auto;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #a8a8a5;
+      box-shadow: 0 0 0 2px rgba(55, 53, 47, 0.08);
+    }
+
+    textarea {
+      min-height: 78px;
+      resize: vertical;
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .quick-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .visually-hidden-control {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .segmented-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .seg-button {
+      min-height: 42px;
+      padding: 9px 18px;
+      border: 1px solid #cfd8d6;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(31, 37, 37, 0.04);
+    }
+
+    .seg-button.active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #fff;
+    }
+
+    .koma-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .koma-button {
+      aspect-ratio: 1.35;
+      min-height: 70px;
+      border: 1px solid #d4dcda;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--accent);
+      font-size: 2rem;
+      font-weight: 800;
+      box-shadow: 0 4px 14px rgba(31, 37, 37, 0.05);
+    }
+
+    .koma-button.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .lesson-items {
+      display: grid;
+      gap: 10px;
+    }
+
+    .lesson-item-row {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lesson-item-label {
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .quick-button {
+      min-height: 38px;
+      padding: 8px 14px;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--accent-dark);
+      font-weight: 700;
+    }
+
+    .quick-inputs {
+      display: grid;
+      gap: 10px;
+    }
+
+    .primary-button,
+    .secondary-button,
+    .danger-button,
+    .ghost-button {
+      min-height: 48px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .primary-button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(0, 139, 134, 0.20);
+    }
+
+    .primary-button:hover {
+      background: var(--accent-dark);
+    }
+
+    .secondary-button {
+      border: 1px solid var(--accent);
+      background: #fff;
+      color: var(--accent-dark);
+    }
+
+    .danger-button {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .ghost-button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button-row > button {
+      flex: 1 1 160px;
+    }
+
+    .work-state {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfdfd;
+    }
+
+    .big-time {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .log-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .log-item {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfd;
+    }
+
+    .log-main {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .log-title {
+      font-weight: 800;
+    }
+
+    .log-meta {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .mini-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mini-button {
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #f7f7f5;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .mini-button.danger {
+      border-color: #fecaca;
+      color: var(--danger);
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 650;
+    }
+
+    .summary-value {
+      margin-top: 4px;
+      font-size: 1.35rem;
+      font-weight: 750;
+    }
+
+    .summary-compact {
+      width: 100%;
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 11px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .summary-row:last-child {
+      border-bottom: 0;
+    }
+
+    .summary-row .summary-label {
+      min-width: 0;
+      font-size: 0.9rem;
+    }
+
+    .summary-row .summary-value {
+      margin: 0;
+      font-size: 1rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      word-break: break-word;
+    }
+
+    th {
+      background: #f1f5f5;
+      color: var(--muted);
+      font-size: 0.88rem;
+      white-space: nowrap;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .detail-item {
+      padding: 10px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfbfa;
+    }
+
+    .detail-main {
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .detail-sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .warning-list {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .warning-item {
+      padding: 10px 12px;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+      background: var(--warning-bg);
+      color: var(--warning);
+      font-weight: 650;
+    }
+
+    .copy-area {
+      margin-top: 12px;
+      min-height: 210px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92rem;
+    }
+
+    .toast {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      left: 14px;
+      z-index: 20;
+      display: none;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 13px 14px;
+      border-radius: 8px;
+      background: #37352f;
+      color: #fff;
+      font-weight: 650;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14);
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    .toast.error {
+      background: var(--danger);
+    }
+
+    dialog {
+      width: min(calc(100% - 24px), 560px);
+      border: 0;
+      border-radius: 14px;
+      padding: 0;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+    }
+
+    dialog::backdrop {
+      background: rgba(15, 23, 42, 0.35);
+    }
+
+    .dialog-body {
+      padding: 18px;
+      background: #fff;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        padding: 12px;
+      }
+
+      .title-row,
+      .log-main {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .row-2,
+      .lesson-item-row {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .button-row > button {
+        flex-basis: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="title-row">
+        <div>
+          <h1>勤怠・請求メモ</h1>
+          <div id="todayLabel" class="today">読み込み中...</div>
+        </div>
+        <div id="statusBadge" class="status-badge">停止中</div>
+      </div>
+      <div id="testModeBanner" class="test-mode hidden">PCテストモード：このブラウザだけに保存します。Apps Script公開後はスプレッドシートに保存されます。</div>
+      <div id="topAlert" class="alert hidden"></div>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="lessonTitle">
+        <h2 id="lessonTitle" class="section-title"><span class="section-icon" aria-hidden="true"></span>講師業務</h2>
+        <div class="form-grid">
+          <div class="field">
+            <div class="label">日付</div>
+            <div id="lessonAutoDate" class="muted">今日の日付で自動保存します。</div>
+            <input id="lessonDate" type="hidden">
+          </div>
+
+          <div class="field">
+            <label for="lessonKoma">コマ数</label>
+            <select id="lessonKoma" class="visually-hidden-control">
+              <option value="1">1コマ</option>
+              <option value="2">2コマ</option>
+              <option value="3">3コマ</option>
+              <option value="4">4コマ</option>
+            </select>
+            <div id="lessonKomaButtons" class="koma-buttons"></div>
+          </div>
+
+          <div class="field">
+            <div class="label">各コマの内容</div>
+            <div id="lessonItems" class="lesson-items"></div>
+          </div>
+
+          <div class="field">
+            <label for="lessonNote">補足メモ（任意）</label>
+            <textarea id="lessonNote" placeholder="例：3コマ目は体験会など"></textarea>
+          </div>
+
+          <button id="saveLessonButton" class="primary-button">レッスンを保存</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="workTitle">
+        <h2 id="workTitle" class="section-title"><span class="section-icon user" aria-hidden="true"></span>講師外業務</h2>
+        <div id="workArea"></div>
+      </section>
+
+      <section class="card" aria-labelledby="monthlyTitle">
+        <h2 id="monthlyTitle" class="section-title"><span class="section-icon file" aria-hidden="true"></span>月次出力</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="targetMonth">対象月</label>
+            <input id="targetMonth" type="month">
+          </div>
+
+          <button id="loadSummaryButton" class="primary-button">申請用出力</button>
+
+          <div id="summaryResult" class="hidden"></div>
+
+          <div class="button-row">
+            <button id="copyTextButton" class="secondary-button" disabled>コピー用テキストを作成</button>
+          </div>
+
+          <textarea id="copyText" class="copy-area hidden" readonly></textarea>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="workStartDialog">
+    <div class="dialog-body">
+      <h2>講師外業務の出勤</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label for="startWorkContent">内容</label>
+          <textarea id="startWorkContent" placeholder="例：ULMTG"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="startWorkCategory">分類</label>
+          <select id="startWorkCategory"></select>
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <div class="label">よく使う内容</div>
+            <button id="editQuickItemsButton" class="mini-button" type="button">編集</button>
+          </div>
+          <div id="startWorkQuickButtons" class="quick-buttons"></div>
+        </div>
+
+        <div class="field">
+          <label for="startWorkNote">メモ（任意）</label>
+          <textarea id="startWorkNote" placeholder="補足があれば入力"></textarea>
+        </div>
+
+        <div class="button-row">
+          <button id="confirmStartWorkButton" class="primary-button" type="button">出勤する</button>
+          <button id="cancelStartWorkButton" class="ghost-button" type="button">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="quickItemsDialog">
+    <div class="dialog-body">
+      <h2>よく使う内容を編集</h2>
+      <div class="form-grid">
+        <div class="muted">最大6個まで登録できます。空欄は保存時に無視されます。</div>
+        <div id="quickItemInputs" class="quick-inputs"></div>
+        <div class="button-row">
+          <button id="saveQuickItemsButton" class="primary-button" type="button">保存</button>
+          <button id="closeQuickItemsButton" class="ghost-button" type="button">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const state = {
+      lessonCategories: [],
+      lessonItemOptions: [],
+      workCategories: [],
+      workQuickItems: [],
+      todayIso: '',
+      activeWork: null,
+      recentLogs: [],
+      summary: null,
+      editingLog: null,
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      bindStaticEvents();
+      loadApp();
+    });
+
+    function bindStaticEvents() {
+      $('saveLessonButton').addEventListener('click', saveLesson);
+      $('lessonKoma').addEventListener('change', renderLessonItemSelectors);
+      $('loadSummaryButton').addEventListener('click', loadMonthlySummary);
+      $('copyTextButton').addEventListener('click', createCopyText);
+      $('confirmStartWorkButton').addEventListener('click', confirmStartWork);
+      $('cancelStartWorkButton').addEventListener('click', closeStartWorkDialog);
+      $('saveQuickItemsButton').addEventListener('click', saveQuickItems);
+      $('closeQuickItemsButton').addEventListener('click', closeQuickItemsDialog);
+    }
+
+    async function loadApp() {
+      try {
+        setBusy(true);
+        const data = await gas('getInitialData');
+        state.lessonCategories = data.lessonCategories;
+        state.lessonItemOptions = data.lessonItemOptions || ['CB', 'CS', 'プラコ', '体験会', 'キャンプ', 'キャンプ(10時)', 'その他・要確認'];
+        state.workCategories = data.workCategories;
+        state.workQuickItems = data.workQuickItems;
+        state.todayIso = data.todayIso;
+        state.activeWork = data.activeWork;
+        state.recentLogs = data.recentLogs || [];
+
+        $('todayLabel').textContent = data.todayDisplay;
+        $('lessonAutoDate').textContent = `${data.todayDisplay} で自動保存します。`;
+        $('lessonDate').value = data.todayIso;
+        $('targetMonth').value = data.currentMonth;
+        renderLessonKomaButtons();
+        renderLessonItemSelectors();
+        renderWorkArea();
+        renderHeader();
+        $('testModeBanner').classList.toggle('hidden', hasAppsScript());
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function refreshFromResult(result) {
+      state.activeWork = result.activeWork;
+      state.recentLogs = result.recentLogs || [];
+      renderHeader();
+      renderWorkArea();
+      showToast(result.message || '更新しました。');
+    }
+
+    function renderHeader() {
+      const badge = $('statusBadge');
+      const alert = $('topAlert');
+      if (state.activeWork) {
+        badge.textContent = '講師外業務中';
+        badge.classList.add('active');
+        alert.textContent = `未終了の講師外業務があります。開始：${state.activeWork.dateDisplay} ${state.activeWork.start}`;
+        alert.classList.remove('hidden');
+      } else {
+        badge.textContent = '停止中';
+        badge.classList.remove('active');
+        alert.classList.add('hidden');
+        alert.textContent = '';
+      }
+    }
+
+    function renderWorkArea() {
+      const area = $('workArea');
+      if (!state.activeWork) {
+        area.innerHTML = `
+          <div class="work-state">
+            <div>
+              <div class="label">状態</div>
+              <div class="big-time">停止中</div>
+            </div>
+            <button id="startWorkButton" class="primary-button">出勤</button>
+          </div>
+        `;
+        $('startWorkButton').addEventListener('click', openStartWorkDialog);
+        return;
+      }
+
+      area.innerHTML = `
+        <div class="work-state">
+          <div>
+            <div class="label">状態</div>
+            <div class="muted">講師外業務中</div>
+            <div class="label">出勤時刻</div>
+            <div class="big-time">${escapeHtml(state.activeWork.start)}</div>
+            <div class="muted">${escapeHtml(state.activeWork.dateDisplay)} / ${escapeHtml(state.activeWork.category || 'その他MTGなど')}</div>
+            <div>${escapeHtml(state.activeWork.content || '内容なし')}</div>
+          </div>
+          <div class="button-row">
+            <button id="finishWorkButton" class="primary-button">退勤</button>
+            <button id="cancelActiveWorkButton" class="danger-button">出勤を取り消す</button>
+          </div>
+        </div>
+      `;
+      $('finishWorkButton').addEventListener('click', finishWork);
+      $('cancelActiveWorkButton').addEventListener('click', cancelActiveWork);
+    }
+
+    function renderLessonKomaButtons() {
+      const container = $('lessonKomaButtons');
+      container.innerHTML = [1, 2, 3, 4].map((number) => `
+        <button type="button" class="koma-button" data-koma="${number}">${number}</button>
+      `).join('');
+
+      container.querySelectorAll('button').forEach((button) => {
+        button.addEventListener('click', () => {
+          $('lessonKoma').value = button.dataset.koma;
+          updateLessonKomaButtons();
+          renderLessonItemSelectors();
+        });
+      });
+      updateLessonKomaButtons();
+    }
+
+    function updateLessonKomaButtons() {
+      const value = $('lessonKoma').value;
+      document.querySelectorAll('#lessonKomaButtons .koma-button').forEach((button) => {
+        button.classList.toggle('active', button.dataset.koma === value);
+      });
+    }
+
+    function renderLessonItemSelectors() {
+      const count = Number($('lessonKoma').value || 1);
+      const container = $('lessonItems');
+      const options = state.lessonItemOptions.length
+        ? state.lessonItemOptions
+        : ['CB', 'CS', 'プラコ', '体験会', 'キャンプ', 'キャンプ(10時)', 'その他・要確認'];
+      container.innerHTML = Array.from({ length: count }, (_, index) => `
+        <div class="lesson-item-row">
+          <div class="lesson-item-label">${index + 1}コマ目</div>
+          <select class="lesson-item-select" aria-label="${index + 1}コマ目">
+            ${options.map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join('')}
+          </select>
+        </div>
+      `).join('');
+    }
+
+    function getLessonItemValues() {
+      return Array.from(document.querySelectorAll('.lesson-item-select'))
+        .map((select) => select.value)
+        .filter(Boolean);
+    }
+
+    function openStartWorkDialog() {
+      $('startWorkContent').value = '';
+      $('startWorkNote').value = '';
+      fillSelect($('startWorkCategory'), state.workCategories);
+      $('startWorkCategory').value = 'その他MTGなど';
+      renderQuickButtons('startWorkQuickButtons', state.workQuickItems, (text) => {
+        $('startWorkContent').value = text;
+        $('startWorkContent').focus();
+      });
+      $('editQuickItemsButton').addEventListener('click', openQuickItemsDialog);
+
+      const dialog = $('workStartDialog');
+      if (dialog.showModal) {
+        dialog.showModal();
+      } else {
+        dialog.setAttribute('open', 'open');
+      }
+    }
+
+    function closeStartWorkDialog() {
+      const dialog = $('workStartDialog');
+      if (dialog.close) {
+        dialog.close();
+      } else {
+        dialog.removeAttribute('open');
+      }
+    }
+
+    function openQuickItemsDialog() {
+      const inputs = Array.from({ length: 6 }, (_, index) => {
+        const value = state.workQuickItems[index] || '';
+        return `
+          <div class="field">
+            <label for="quickItem${index}">${index + 1}個目</label>
+            <input id="quickItem${index}" class="quick-item-input" type="text" maxlength="40" value="${escapeHtml(value)}" placeholder="例：ULMTG">
+          </div>
+        `;
+      }).join('');
+      $('quickItemInputs').innerHTML = inputs;
+
+      const dialog = $('quickItemsDialog');
+      if (dialog.showModal) {
+        dialog.showModal();
+      } else {
+        dialog.setAttribute('open', 'open');
+      }
+    }
+
+    function closeQuickItemsDialog() {
+      const dialog = $('quickItemsDialog');
+      if (dialog.close) {
+        dialog.close();
+      } else {
+        dialog.removeAttribute('open');
+      }
+    }
+
+    async function saveQuickItems() {
+      const items = Array.from(document.querySelectorAll('.quick-item-input'))
+        .map((input) => input.value.trim())
+        .filter(Boolean);
+
+      if (items.length > 6) {
+        showToast('よく使う内容は最大6個までです。', true);
+        return;
+      }
+
+      try {
+        setBusy(true);
+        const result = await gas('saveWorkQuickItems', items);
+        state.workQuickItems = result.workQuickItems;
+        renderQuickButtons('startWorkQuickButtons', state.workQuickItems, (text) => {
+          $('startWorkContent').value = text;
+          $('startWorkContent').focus();
+        });
+        closeQuickItemsDialog();
+        showToast(result.message || 'よく使う内容を保存しました。');
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function confirmStartWork() {
+      const payload = {
+        content: $('startWorkContent').value,
+        category: $('startWorkCategory').value,
+        note: $('startWorkNote').value,
+      };
+
+      try {
+        setBusy(true);
+        const result = await gas('startWork', payload);
+        closeStartWorkDialog();
+        await refreshFromResult(result);
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function saveLesson() {
+      const content = getLessonItemValues().join(' / ');
+      const payload = {
+        date: $('lessonDate').value || state.todayIso,
+        lessonItems: getLessonItemValues(),
+        koma: $('lessonKoma').value,
+        content,
+        note: $('lessonNote').value,
+      };
+
+      try {
+        setBusy(true);
+        const result = await gas('saveLesson', payload);
+        $('lessonNote').value = '';
+        $('lessonKoma').value = '1';
+        updateLessonKomaButtons();
+        renderLessonItemSelectors();
+        await refreshFromResult(result);
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function finishWork() {
+      try {
+        setBusy(true);
+        const result = await gas('finishWork');
+        await refreshFromResult(result);
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function cancelActiveWork() {
+      if (!confirm('未退勤の出勤を取り消しますか？この出勤ログは削除されます。')) {
+        return;
+      }
+
+      try {
+        setBusy(true);
+        const result = await gas('cancelActiveWork');
+        await refreshFromResult(result);
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function loadMonthlySummary() {
+      try {
+        setBusy(true);
+        const summary = await gas('getMonthlySummary', $('targetMonth').value);
+        state.summary = summary;
+        renderSummary(summary);
+        $('copyTextButton').disabled = false;
+        showToast('申請用出力を作成しました。');
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function renderSummary(summary) {
+      const warnings = summary.warnings.length
+        ? `<div class="warning-list">${summary.warnings.map((warning) => `<div class="warning-item">${escapeHtml(warning)}</div>`).join('')}</div>`
+        : '';
+      const confirmNotes = summary.confirmNotes.length
+        ? `
+          <h3>要確認メモ</h3>
+          <div class="warning-list">
+            ${summary.confirmNotes.map((note) => `<div class="warning-item">${escapeHtml(note)}</div>`).join('')}
+          </div>
+        `
+        : '';
+
+      const details = summary.details.length
+        ? summary.details.map((detail) => `
+            <div class="detail-item">
+              <div class="detail-main">${escapeHtml(detail.shortDate)} ${escapeHtml(detail.start)}-${escapeHtml(detail.end)} ${escapeHtml(detail.content)}</div>
+              <div class="detail-sub">${escapeHtml(detail.category)} / ${escapeHtml(detail.minutes)}分 / ${escapeHtml(detail.hours)}時間</div>
+            </div>
+          `).join('')
+        : '<div class="detail-item">講師外業務の詳細はありません。</div>';
+
+      $('summaryResult').innerHTML = `
+        ${warnings}
+        <div class="summary-compact">
+          ${summaryRow('対象月', summary.monthLabel)}
+          ${summaryRow('通常コマ数', summary.normalKoma)}
+          ${summaryRow('キャンプ10時コマ数', summary.camp10Koma)}
+          ${summaryRow('レッスン合計コマ数', summary.lessonTotalKoma)}
+          ${summaryRow('教材開発時間', summary.workHours['教材開発'])}
+          ${summaryRow('SNS時間', summary.workHours.SNS)}
+          ${summaryRow('研修時間', summary.workHours['研修'])}
+          ${summaryRow('その他MTGなど時間', summary.workHours['その他MTGなど'])}
+          ${summaryRow('講師外業務合計時間', summary.workTotalHours)}
+          ${summaryRow('その他・要確認件数', summary.otherConfirmCount)}
+          ${summaryRow('終了漏れ件数', summary.unfinishedCount)}
+          ${summaryRow('未分類件数', summary.unclassifiedCount)}
+        </div>
+        ${confirmNotes}
+
+        <h3>講師外業務の詳細一覧</h3>
+        <div class="detail-list">${details}</div>
+      `;
+      $('summaryResult').classList.remove('hidden');
+      $('copyText').classList.add('hidden');
+      $('copyText').value = '';
+    }
+
+    function summaryRow(label, value) {
+      return `
+        <div class="summary-row">
+          <div class="summary-label">${escapeHtml(label)}</div>
+          <div class="summary-value">${escapeHtml(value)}</div>
+        </div>
+      `;
+    }
+
+    async function createCopyText() {
+      if (!state.summary) return;
+      const text = buildCopyText(state.summary);
+      $('copyText').value = text;
+      $('copyText').classList.remove('hidden');
+
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('コピー用テキストを作成してコピーしました。');
+      } catch (error) {
+        $('copyText').focus();
+        $('copyText').select();
+        showToast('コピー用テキストを作成しました。必要に応じて選択してコピーしてください。');
+      }
+    }
+
+    function buildCopyText(summary) {
+      const details = summary.details.length
+        ? summary.details.map((detail) => `${detail.shortDate} ${detail.start}-${detail.end} ${detail.content}`)
+        : ['（なし）'];
+      const notes = summary.confirmNotes.length
+        ? ['', '要確認メモ', ...summary.confirmNotes]
+        : [];
+
+      return [
+        `対象月：${summary.monthLabel}`,
+        '',
+        'レッスン',
+        `通常コマ数：${summary.normalKoma}`,
+        `キャンプ10時コマ数：${summary.camp10Koma}`,
+        `レッスン合計コマ数：${summary.lessonTotalKoma}`,
+        '',
+        '講師外業務',
+        `教材開発：${summary.workHours['教材開発']}`,
+        `SNS：${summary.workHours.SNS}`,
+        `研修：${summary.workHours['研修']}`,
+        `その他MTGなど：${summary.workHours['その他MTGなど']}`,
+        `講師外業務合計：${summary.workTotalHours}`,
+        '',
+        '講師外業務詳細',
+        ...details,
+        ...notes,
+      ].join('\n');
+    }
+
+    function renderQuickButtons(containerId, items, onClick) {
+      const container = $(containerId);
+      container.innerHTML = items.map((item) => `<button type="button" class="quick-button">${escapeHtml(item)}</button>`).join('');
+      container.querySelectorAll('button').forEach((button) => {
+        button.addEventListener('click', () => onClick(button.textContent));
+      });
+    }
+
+    function fillSelect(select, values, includeBlank = false, blankLabel = '未選択') {
+      const options = includeBlank ? [''].concat(values) : values;
+      select.innerHTML = options.map((value) => {
+        const label = value || blankLabel;
+        return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
+      }).join('');
+    }
+
+    const LOCAL_STORAGE_KEY = 'kintai_logs_pc_test_v1';
+    const LOCAL_QUICK_ITEMS_KEY = 'kintai_work_quick_items_v1';
+    const DEFAULT_WORK_QUICK_ITEMS = ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務', 'UL面談', '模擬レッスン'];
+
+    const localApi = {
+      getInitialData() {
+        const today = new Date();
+        return {
+          todayIso: toDateIso(today),
+          todayDisplay: toJapaneseDate(today),
+          currentMonth: toMonthValue(today),
+          lessonCategories: ['通常コマ', 'キャンプ10時', 'その他・要確認'],
+          workCategories: ['教材開発', 'SNS', '研修', 'その他MTGなど'],
+          lessonItemOptions: ['CB', 'CS', 'プラコ', '体験会', 'キャンプ', 'キャンプ(10時)', 'その他・要確認'],
+          workQuickItems: localReadQuickItems(),
+          activeWork: localFindActiveWork(),
+          recentLogs: [],
+        };
+      },
+
+      saveWorkQuickItems(items) {
+        const normalized = normalizeQuickItemsClient(items);
+        localStorage.setItem(LOCAL_QUICK_ITEMS_KEY, JSON.stringify(normalized));
+        return {
+          ok: true,
+          message: 'よく使う内容を保存しました。（PCテスト）',
+          workQuickItems: normalized,
+        };
+      },
+
+      saveLesson(payload) {
+        const logs = localReadLogs();
+        const dateIso = payload.date || toDateIso(new Date());
+        const lessonItems = Array.isArray(payload.lessonItems) ? payload.lessonItems : [];
+        const category = getLocalLessonCategoryByItems(lessonItems);
+        const koma = Number(payload.koma || 1);
+        const note = String(payload.note || '').trim();
+        const content = lessonItems.join(' / ') + (note ? ` / ${note}` : '');
+        logs.push({
+          id: localCreateId(),
+          type: 'レッスン',
+          dateIso,
+          dateDisplay: displayDateFromIso(dateIso),
+          month: dateIso.slice(0, 7),
+          start: '',
+          end: '',
+          content,
+          category,
+          koma,
+          minutes: '',
+          hours: '',
+          note,
+          isActive: false,
+        });
+        localWriteLogs(logs);
+        return {
+          ok: true,
+          message: 'レッスンを保存しました。（PCテスト）',
+          activeWork: localFindActiveWork(),
+          recentLogs: [],
+        };
+      },
+
+      startWork(payload) {
+        const logs = localReadLogs();
+        if (localFindActiveWork(logs)) {
+          throw new Error('未終了の講師外業務があります。先に退勤してください。');
+        }
+
+        const content = String(payload && payload.content || '').trim();
+        if (!content) {
+          throw new Error('出勤時に内容を入力してください。');
+        }
+
+        const now = new Date();
+        const dateIso = toDateIso(now);
+        logs.push({
+          id: localCreateId(),
+          type: '講師外業務',
+          dateIso,
+          dateDisplay: displayDateFromIso(dateIso),
+          month: dateIso.slice(0, 7),
+          start: toTimeText(now),
+          end: '',
+          content,
+          category: payload.category || 'その他MTGなど',
+          koma: '',
+          minutes: '',
+          hours: '',
+          note: String(payload.note || ''),
+          isActive: true,
+        });
+        localWriteLogs(logs);
+        return {
+          ok: true,
+          message: '出勤しました。（PCテスト）',
+          activeWork: localFindActiveWork(),
+          recentLogs: [],
+        };
+      },
+
+      finishWork() {
+        const logs = localReadLogs();
+        const active = localFindActiveWork(logs);
+        if (!active) {
+          throw new Error('開始中の講師外業務がありません。');
+        }
+
+        const now = new Date();
+        const startAt = new Date(`${active.dateIso}T${active.start}:00`);
+        let minutes = Math.round((now.getTime() - startAt.getTime()) / 60000);
+        if (minutes < 0) {
+          minutes += 24 * 60;
+        }
+        active.end = toTimeText(now);
+        active.minutes = minutes;
+        active.hours = roundHoursClient(minutes).toFixed(2);
+        active.isActive = false;
+        localWriteLogs(logs);
+        return {
+          ok: true,
+          message: '退勤しました。（PCテスト）',
+          activeWork: localFindActiveWork(),
+          recentLogs: [],
+        };
+      },
+
+      cancelActiveWork() {
+        const logs = localReadLogs();
+        const active = localFindActiveWork(logs);
+        if (!active) {
+          throw new Error('取り消せる未退勤の出勤がありません。');
+        }
+        localWriteLogs(logs.filter((log) => log.id !== active.id));
+        return {
+          ok: true,
+          message: '出勤を取り消しました。（PCテスト）',
+          activeWork: localFindActiveWork(),
+          recentLogs: [],
+        };
+      },
+
+      prepareFinishWork() {
+        const now = new Date();
+        return {
+          endIso: `${toDateIso(now)}T${toTimeText(now)}:00`,
+          endDisplay: `${displayDateFromIso(toDateIso(now))} ${toTimeText(now)}`,
+        };
+      },
+
+      getMonthlySummary(month) {
+        return buildLocalMonthlySummary(month);
+      },
+    };
+
+    function hasAppsScript() {
+      return typeof google !== 'undefined' && google.script && google.script.run;
+    }
+
+    function gas(functionName, ...args) {
+      if (!hasAppsScript()) {
+        return Promise.resolve().then(() => {
+          if (!localApi[functionName]) {
+            throw new Error(`PCテストモードでは ${functionName} を使えません。`);
+          }
+          return localApi[functionName](...args);
+        });
+      }
+
+      return new Promise((resolve, reject) => {
+        const runner = google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject);
+        runner[functionName](...args);
+      });
+    }
+
+    function localReadLogs() {
+      try {
+        return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '[]');
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function localWriteLogs(logs) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(logs));
+    }
+
+    function localReadQuickItems() {
+      try {
+        const stored = localStorage.getItem(LOCAL_QUICK_ITEMS_KEY);
+        if (stored === null) {
+          return DEFAULT_WORK_QUICK_ITEMS.slice();
+        }
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? normalizeQuickItemsClient(parsed) : DEFAULT_WORK_QUICK_ITEMS.slice();
+      } catch (error) {
+        return DEFAULT_WORK_QUICK_ITEMS.slice();
+      }
+    }
+
+    function normalizeQuickItemsClient(items) {
+      const seen = new Set();
+      return (Array.isArray(items) ? items : [])
+        .map((item) => String(item || '').trim().slice(0, 40))
+        .filter((item) => {
+          if (!item || seen.has(item)) return false;
+          seen.add(item);
+          return true;
+        })
+        .slice(0, 6);
+    }
+
+    function localFindActiveWork(logs = localReadLogs()) {
+      return logs.find((log) => log.type === '講師外業務' && !log.end) || null;
+    }
+
+    function getLocalLessonCategoryByItems(items) {
+      if (items.some((item) => item === 'その他・要確認')) {
+        return 'その他・要確認';
+      }
+
+      const hasCamp10 = items.some((item) => item === 'キャンプ(10時)');
+      const hasNormal = items.some((item) => item !== 'キャンプ(10時)');
+      if (hasCamp10 && hasNormal) {
+        return 'その他・要確認';
+      }
+      if (hasCamp10) {
+        return 'キャンプ10時';
+      }
+      return '通常コマ';
+    }
+
+    function buildLocalMonthlySummary(month) {
+      if (!/^\d{4}-\d{2}$/.test(month || '')) {
+        throw new Error('対象月を選択してください。');
+      }
+      const monthLabel = `${Number(month.slice(0, 4))}年${Number(month.slice(5, 7))}月`;
+      const summary = {
+        month,
+        monthLabel,
+        normalKoma: 0,
+        camp10Koma: 0,
+        otherConfirmKoma: 0,
+        lessonTotalKoma: 0,
+        workMinutes: { '教材開発': 0, SNS: 0, '研修': 0, 'その他MTGなど': 0 },
+        workHours: { '教材開発': '0.00', SNS: '0.00', '研修': '0.00', 'その他MTGなど': '0.00' },
+        workTotalMinutes: 0,
+        workTotalHours: '0.00',
+        unclassifiedCount: 0,
+        unfinishedCount: 0,
+        otherConfirmCount: 0,
+        details: [],
+        confirmNotes: [],
+        warnings: [],
+      };
+
+      localReadLogs().filter((log) => log.month === month).forEach((log) => {
+        if (log.type === 'レッスン') {
+          const koma = Number(log.koma || 0);
+          if (log.category === '通常コマ') {
+            summary.normalKoma += koma;
+          } else if (log.category === 'キャンプ10時') {
+            summary.camp10Koma += koma;
+          } else if (log.category === 'その他・要確認') {
+            summary.otherConfirmKoma += koma;
+            summary.otherConfirmCount += 1;
+            summary.confirmNotes.push(`その他・要確認: ${log.dateDisplay} ${log.content || '内容なし'}`);
+          } else {
+            summary.unclassifiedCount += 1;
+            summary.confirmNotes.push(`未分類: ${log.dateDisplay} ${log.content || '内容なし'}`);
+          }
+          return;
+        }
+
+        if (log.type === '講師外業務') {
+          if (!log.end) {
+            summary.unfinishedCount += 1;
+            summary.confirmNotes.push(`終了漏れ: ${log.dateDisplay} ${log.start}開始 ${log.content || '内容なし'}`);
+            return;
+          }
+          if (!summary.workMinutes.hasOwnProperty(log.category)) {
+            summary.unclassifiedCount += 1;
+            summary.confirmNotes.push(`未分類: ${log.dateDisplay} ${log.content || '内容なし'}`);
+            return;
+          }
+          const minutes = Number(log.minutes || 0);
+          summary.workMinutes[log.category] += minutes;
+          summary.details.push({
+            date: log.dateDisplay,
+            shortDate: shortDateFromIso(log.dateIso),
+            start: log.start,
+            end: log.end,
+            content: log.content,
+            category: log.category,
+            minutes,
+            hours: roundHoursClient(minutes).toFixed(2),
+            note: log.note || '',
+          });
+        }
+      });
+
+      summary.lessonTotalKoma = summary.normalKoma + summary.camp10Koma;
+      Object.keys(summary.workMinutes).forEach((category) => {
+        const minutes = summary.workMinutes[category];
+        summary.workTotalMinutes += minutes;
+        summary.workHours[category] = roundHoursClient(minutes).toFixed(2);
+      });
+      summary.workTotalHours = roundHoursClient(summary.workTotalMinutes).toFixed(2);
+
+      if (summary.otherConfirmCount > 0) summary.warnings.push('その他・要確認のレッスンがあります。内容を確認してください。');
+      if (summary.unfinishedCount > 0) summary.warnings.push('終了漏れの講師外業務があります。勤怠ログを確認してください。');
+      if (summary.unclassifiedCount > 0) summary.warnings.push('未分類のログがあります。分類を確認してください。');
+      return summary;
+    }
+
+    function localCreateId() {
+      return `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    }
+
+    function toDateIso(date) {
+      return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+    }
+
+    function toMonthValue(date) {
+      return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
+    }
+
+    function toJapaneseDate(date) {
+      return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    }
+
+    function displayDateFromIso(dateIso) {
+      const [year, month, day] = dateIso.split('-');
+      return `${year}/${month}/${day}`;
+    }
+
+    function shortDateFromIso(dateIso) {
+      const [, month, day] = dateIso.split('-');
+      return `${Number(month)}/${Number(day)}`;
+    }
+
+    function toTimeText(date) {
+      return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+    }
+
+    function pad2(value) {
+      return String(value).padStart(2, '0');
+    }
+
+    function roundHoursClient(minutes) {
+      return Math.round((Number(minutes || 0) / 60) * 100) / 100;
+    }
+
+    function setBusy(isBusy) {
+      document.querySelectorAll('button').forEach((button) => {
+        button.disabled = isBusy || button.dataset.keepEnabled === 'true';
+      });
+      if (!isBusy) {
+        $('copyTextButton').disabled = !state.summary;
+      }
+    }
+
+    function showToast(message, isError = false) {
+      const toast = $('toast');
+      toast.textContent = message;
+      toast.classList.toggle('error', isError);
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 4200);
+    }
+
+    function showError(error) {
+      const message = error && error.message ? error.message.replace(/^Exception:\s*/, '') : String(error);
+      showToast(message || 'エラーが発生しました。', true);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+  </script>
+</body>
+</html>
