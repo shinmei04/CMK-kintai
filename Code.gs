@@ -25,6 +25,8 @@ const APP_CONFIG = {
   workQuickItemsPropertyKey: 'workQuickItems',
   defaultWorkQuickItems: ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務', 'UL面談', '模擬レッスン'],
   maxWorkQuickItems: 6,
+  lessonPayPerKoma: 2200,
+  workHourlyPay: 1300,
 };
 
 const COL = {
@@ -87,6 +89,7 @@ function getInitialData() {
     workQuickItems: getWorkQuickItems_(),
     activeWork: findActiveWork_(),
     recentLogs: getRecentLogs_(5),
+    salarySummary: getCurrentSalarySummary_(),
   };
 }
 
@@ -144,6 +147,7 @@ function saveLesson(payload) {
       message: 'レッスンを保存しました。',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: getCurrentSalarySummary_(),
     };
   });
 }
@@ -191,6 +195,7 @@ function startWork(payload) {
       message: '出勤しました。',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: getCurrentSalarySummary_(),
     };
   });
 }
@@ -253,6 +258,7 @@ function finishWork(payload) {
       message: '退勤しました。',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: getCurrentSalarySummary_(),
     };
   });
 }
@@ -271,6 +277,7 @@ function cancelActiveWork() {
       message: '出勤を取り消しました。',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: getCurrentSalarySummary_(),
     };
   });
 }
@@ -288,6 +295,7 @@ function deleteLog(id) {
       message: 'ログを削除しました。',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: getCurrentSalarySummary_(),
     };
   });
 }
@@ -376,6 +384,7 @@ function updateLog(payload) {
       message: 'ログを更新しました。',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: getCurrentSalarySummary_(),
     };
   });
 }
@@ -403,6 +412,55 @@ function getMonthlySummary(month) {
 
   finalizeSummary_(summary);
   writeMonthlySummary_(summary);
+  return summary;
+}
+
+function getCurrentSalarySummary_() {
+  return buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM'));
+}
+
+function buildSalarySummary_(month) {
+  const target = parseMonth_(month);
+  const summary = {
+    month: target.monthValue,
+    monthLabel: target.monthLabel,
+    lessonKoma: 0,
+    workMinutes: 0,
+    workHours: '0.00',
+    lessonPay: 0,
+    workPay: 0,
+    totalPay: 0,
+    lessonPayPerKoma: APP_CONFIG.lessonPayPerKoma,
+    workHourlyPay: APP_CONFIG.workHourlyPay,
+  };
+
+  readLogObjects_().forEach(function (log) {
+    if (log.month !== target.monthValue) {
+      return;
+    }
+
+    if (log.type === APP_CONFIG.lessonType) {
+      summary.lessonKoma += Number(log.koma || 0);
+      return;
+    }
+
+    if (log.type === APP_CONFIG.workType && log.end) {
+      let minutes = Number(log.minutes || 0);
+      if (!minutes && log.start && log.end) {
+        const startAt = buildDateTime_(log.dateIso, log.start);
+        const endAt = buildDateTime_(log.dateIso, log.end);
+        if (startAt && endAt && endAt.getTime() >= startAt.getTime()) {
+          minutes = Math.round((endAt.getTime() - startAt.getTime()) / 60000);
+        }
+      }
+      summary.workMinutes += minutes;
+    }
+  });
+
+  summary.workHours = roundHours_(summary.workMinutes).toFixed(2);
+  summary.lessonPay = summary.lessonKoma * APP_CONFIG.lessonPayPerKoma;
+  summary.workPay = Math.round(Number(summary.workHours) * APP_CONFIG.workHourlyPay);
+  summary.totalPay = summary.lessonPay + summary.workPay;
   return summary;
 }
 

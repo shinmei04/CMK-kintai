@@ -56,6 +56,54 @@
       opacity: 0.55;
     }
 
+    .salary-chip {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      min-height: 64px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), #12b9b1);
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(0, 139, 134, 0.28);
+    }
+
+    .salary-icon {
+      display: inline-flex;
+      width: 40px;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #fff;
+      color: var(--accent);
+      font-size: 1.45rem;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .salary-label {
+      min-width: 0;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .salary-amount {
+      color: #fff;
+      font-size: 1.8rem;
+      font-weight: 850;
+      line-height: 1;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
     .app {
       width: min(100%, 690px);
       margin: 0 auto;
@@ -71,9 +119,24 @@
 
     .title-row {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       gap: 12px;
+    }
+
+    .title-copy {
+      min-width: 0;
+    }
+
+    .header-meta-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-meta-row .status-badge {
+      justify-self: center;
     }
 
     h1 {
@@ -668,9 +731,25 @@
         padding: 12px;
       }
 
+      .salary-chip {
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        min-height: 58px;
+        padding: 9px 14px;
+      }
+
+      .salary-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.25rem;
+      }
+
+      .salary-amount {
+        font-size: 1.45rem;
+      }
+
       .title-row {
-        align-items: stretch;
-        flex-direction: column;
+        align-items: center;
+        flex-direction: row;
       }
 
       .row-2,
@@ -705,11 +784,14 @@
   <div class="app">
     <header class="app-header">
       <div class="title-row">
-        <div>
+        <div class="title-copy">
           <h1>勤怠・請求メモ</h1>
-          <div id="todayLabel" class="today">読み込み中...</div>
         </div>
+      </div>
+      <div class="header-meta-row">
+        <div id="todayLabel" class="today">読み込み中...</div>
         <div id="statusBadge" class="status-badge">停止中</div>
+        <div aria-hidden="true"></div>
       </div>
       <div id="testModeBanner" class="test-mode hidden">PCテストモード：このブラウザだけに保存します。Apps Script公開後はスプレッドシートに保存されます。</div>
       <div id="topAlert" class="alert hidden"></div>
@@ -792,6 +874,14 @@
           </div>
         </div>
       </section>
+
+      <section aria-label="今月の給料">
+        <div id="salaryChip" class="salary-chip" aria-live="polite">
+          <div class="salary-icon" aria-hidden="true">¥</div>
+          <div class="salary-label">今月の給料</div>
+          <div id="salaryAmount" class="salary-amount">--</div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -855,6 +945,7 @@
       todayIso: '',
       activeWork: null,
       recentLogs: [],
+      salarySummary: null,
       summary: null,
       editingLog: null,
     };
@@ -888,6 +979,7 @@
         state.todayIso = data.todayIso;
         state.activeWork = data.activeWork;
         state.recentLogs = data.recentLogs || [];
+        state.salarySummary = data.salarySummary || null;
 
         $('todayLabel').textContent = data.todayDisplay;
         $('lessonAutoDate').textContent = `${data.todayDisplay} で自動保存します。`;
@@ -897,6 +989,7 @@
         renderLessonItemSelectors();
         renderWorkArea();
         renderRecentLogs();
+        renderSalarySummary();
         renderHeader();
         $('testModeBanner').classList.toggle('hidden', hasAppsScript());
       } catch (error) {
@@ -909,9 +1002,13 @@
     async function refreshFromResult(result) {
       state.activeWork = result.activeWork;
       state.recentLogs = result.recentLogs || [];
+      if (result.salarySummary) {
+        state.salarySummary = result.salarySummary;
+      }
       renderHeader();
       renderWorkArea();
       renderRecentLogs();
+      renderSalarySummary();
       showToast(result.message || '更新しました。');
     }
 
@@ -929,6 +1026,15 @@
         alert.classList.add('hidden');
         alert.textContent = '';
       }
+    }
+
+    function renderSalarySummary() {
+      const summary = state.salarySummary;
+      $('salaryAmount').textContent = summary ? formatYen(summary.totalPay) : '--';
+    }
+
+    function formatYen(value) {
+      return `¥${Number(value || 0).toLocaleString('ja-JP')}`;
     }
 
     function renderWorkArea() {
@@ -1368,6 +1474,8 @@
     const LOCAL_STORAGE_KEY = 'kintai_logs_pc_test_v1';
     const LOCAL_QUICK_ITEMS_KEY = 'kintai_work_quick_items_v1';
     const DEFAULT_WORK_QUICK_ITEMS = ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務', 'UL面談', '模擬レッスン'];
+    const LESSON_PAY_PER_KOMA = 2200;
+    const WORK_HOURLY_PAY = 1300;
 
     const localApi = {
       getInitialData() {
@@ -1382,6 +1490,7 @@
           workQuickItems: localReadQuickItems(),
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
+          salarySummary: buildLocalSalarySummary(toMonthValue(today)),
         };
       },
 
@@ -1429,6 +1538,7 @@
           message: 'レッスンを保存しました。（PCテスト）',
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
+          salarySummary: buildLocalSalarySummary(toMonthValue(new Date())),
         };
       },
 
@@ -1470,6 +1580,7 @@
           message: '出勤しました。（PCテスト）',
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
+          salarySummary: buildLocalSalarySummary(toMonthValue(new Date())),
         };
       },
 
@@ -1498,6 +1609,7 @@
           message: '退勤しました。（PCテスト）',
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
+          salarySummary: buildLocalSalarySummary(toMonthValue(new Date())),
         };
       },
 
@@ -1513,6 +1625,7 @@
           message: '出勤を取り消しました。（PCテスト）',
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
+          salarySummary: buildLocalSalarySummary(toMonthValue(new Date())),
         };
       },
 
@@ -1613,6 +1726,38 @@
         return 'キャンプ10時';
       }
       return '通常コマ';
+    }
+
+    function buildLocalSalarySummary(month) {
+      const monthLabel = `${Number(month.slice(0, 4))}年${Number(month.slice(5, 7))}月`;
+      const summary = {
+        month,
+        monthLabel,
+        lessonKoma: 0,
+        workMinutes: 0,
+        workHours: '0.00',
+        lessonPay: 0,
+        workPay: 0,
+        totalPay: 0,
+        lessonPayPerKoma: LESSON_PAY_PER_KOMA,
+        workHourlyPay: WORK_HOURLY_PAY,
+      };
+
+      localReadLogs().filter((log) => log.month === month).forEach((log) => {
+        if (log.type === 'レッスン') {
+          summary.lessonKoma += Number(log.koma || 0);
+          return;
+        }
+        if (log.type === '講師外業務' && log.end) {
+          summary.workMinutes += Number(log.minutes || 0);
+        }
+      });
+
+      summary.workHours = roundHoursClient(summary.workMinutes).toFixed(2);
+      summary.lessonPay = summary.lessonKoma * LESSON_PAY_PER_KOMA;
+      summary.workPay = Math.round(Number(summary.workHours) * WORK_HOURLY_PAY);
+      summary.totalPay = summary.lessonPay + summary.workPay;
+      return summary;
     }
 
     function buildLocalMonthlySummary(month) {
