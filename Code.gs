@@ -121,7 +121,7 @@ function setup() {
 
   return {
     ok: true,
-    message: '初期設定が完了しました。',
+    message: '初期設定が完了しました',
   };
 }
 
@@ -153,7 +153,7 @@ function saveWorkQuickItems(items) {
   );
   return {
     ok: true,
-    message: 'よく使う内容を保存しました。',
+    message: 'よく使う内容を保存しました',
     workQuickItems: normalized,
   };
 }
@@ -169,10 +169,10 @@ function saveLesson(payload) {
     const content = lessonItems.join(' / ');
 
     if (!koma || koma < 1 || koma > 4) {
-      throw new Error('コマ数は1から4の範囲で選んでください。');
+      throw new Error('コマ数は1から4の範囲で選んでください');
     }
     if (lessonItems.length !== koma) {
-      throw new Error('コマ数とコマ内容の数が一致していません。');
+      throw new Error('コマ数とコマ内容の数が一致していません');
     }
 
     const now = new Date();
@@ -196,7 +196,7 @@ function saveLesson(payload) {
 
     return {
       ok: true,
-      message: 'レッスンを保存しました。',
+      message: 'レッスンを保存しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
     };
@@ -208,7 +208,7 @@ function startWork(payload) {
     setup();
     const active = findActiveWork_();
     if (active) {
-      throw new Error('未終了の講師外業務があります。先に終了してください。');
+      throw new Error('未終了の講師外業務があるため、先に終了してください');
     }
 
     payload = payload || {};
@@ -219,7 +219,7 @@ function startWork(payload) {
     const note = trim_(payload.note);
 
     if (!content) {
-      throw new Error('出勤時に内容を入力してください。');
+      throw new Error('出勤時に内容を入力してください');
     }
 
     const now = new Date();
@@ -243,7 +243,7 @@ function startWork(payload) {
 
     return {
       ok: true,
-      message: '出勤しました。',
+      message: '出勤しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
     };
@@ -254,7 +254,7 @@ function prepareFinishWork() {
   setup();
   const active = findActiveWork_();
   if (!active) {
-    throw new Error('開始中の講師外業務がありません。');
+    throw new Error('開始中の講師外業務がありません');
   }
 
   const now = new Date();
@@ -269,7 +269,7 @@ function finishWork(payload) {
     setup();
     const activeRow = findActiveWorkRow_();
     if (!activeRow) {
-      throw new Error('開始中の講師外業務がありません。');
+      throw new Error('開始中の講師外業務がありません');
     }
 
     payload = payload || {};
@@ -277,10 +277,10 @@ function finishWork(payload) {
     const startAt = buildDateTime_(activeRow.values[COL.date - 1], activeRow.values[COL.start - 1]);
 
     if (!startAt) {
-      throw new Error('開始時刻を読み取れませんでした。ログを確認してください。');
+      throw new Error('開始時刻を読み取れないため、ログを確認してください');
     }
     if (endAt.getTime() < startAt.getTime()) {
-      throw new Error('終了時刻が開始時刻より前になっています。');
+      throw new Error('終了時刻が開始時刻より前になっています');
     }
 
     const minutes = Math.round((endAt.getTime() - startAt.getTime()) / 60000);
@@ -305,7 +305,7 @@ function finishWork(payload) {
 
     return {
       ok: true,
-      message: '退勤しました。',
+      message: '退勤しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
     };
@@ -317,13 +317,13 @@ function cancelActiveWork() {
     setup();
     const activeRow = findActiveWorkRow_();
     if (!activeRow) {
-      throw new Error('取り消せる未退勤の出勤がありません。');
+      throw new Error('取り消せる未退勤の出勤がありません');
     }
 
     getLogSheet_().deleteRow(activeRow.rowNumber);
     return {
       ok: true,
-      message: '出勤を取り消しました。',
+      message: '出勤を取り消しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
     };
@@ -335,12 +335,12 @@ function deleteLog(id) {
     setup();
     const found = findRowById_(id);
     if (!found) {
-      throw new Error('削除対象のログが見つかりません。');
+      throw new Error('削除対象のログが見つかりません');
     }
     getLogSheet_().deleteRow(found.rowNumber);
     return {
       ok: true,
-      message: 'ログを削除しました。',
+      message: 'ログを削除しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
     };
@@ -352,7 +352,7 @@ function updateLog(payload) {
     setup();
     const found = findRowById_(payload.id);
     if (!found) {
-      throw new Error('編集対象のログが見つかりません。');
+      throw new Error('編集対象のログが見つかりません');
     }
 
     const type = found.values[COL.type - 1];
@@ -361,7 +361,7 @@ function updateLog(payload) {
     const note = trim_(payload.note);
 
     if (!date) {
-      throw new Error('日付を入力してください。');
+      throw new Error('日付を入力してください');
     }
 
     const sheet = getLogSheet_();
@@ -371,7 +371,7 @@ function updateLog(payload) {
       const category = assertInList_(payload.category, APP_CONFIG.lessonCategories, 'レッスン分類');
       const koma = Number(payload.koma);
       if (!koma || koma < 1 || koma > 5) {
-        throw new Error('コマ数は1から5の範囲で選んでください。');
+        throw new Error('コマ数は1から5の範囲で選んでください');
       }
 
       sheet.getRange(row, COL.date, 1, 9).setValues([[
@@ -390,10 +390,10 @@ function updateLog(payload) {
       const end = normalizeTimeText_(payload.end);
       const category = payload.category ? assertInList_(payload.category, APP_CONFIG.workCategories, '講師外業務分類') : '';
       if (!start) {
-        throw new Error('開始時刻を入力してください。');
+        throw new Error('開始時刻を入力してください');
       }
       if (end && (!content || !category)) {
-        throw new Error('終了済みの講師外業務は内容と分類を入力してください。');
+        throw new Error('終了済みの講師外業務は内容と分類を入力してください');
       }
 
       let minutes = '';
@@ -402,7 +402,7 @@ function updateLog(payload) {
         const startAt = buildDateTime_(date, start);
         const endAt = buildDateTime_(date, end);
         if (endAt.getTime() < startAt.getTime()) {
-          throw new Error('編集画面では日付をまたぐ時間は計算できません。必要な場合はシートで直接修正してください。');
+          throw new Error('編集画面では日付をまたぐ時間は計算できません 必要な場合はシートで直接修正してください');
         }
         minutes = Math.round((endAt.getTime() - startAt.getTime()) / 60000);
         hours = roundHours_(minutes);
@@ -420,7 +420,7 @@ function updateLog(payload) {
         note,
       ]]);
     } else {
-      throw new Error('不明な種別のログです。');
+      throw new Error('不明な種別のログです');
     }
 
     sheet.getRange(row, COL.updatedAt).setValue(new Date());
@@ -428,7 +428,7 @@ function updateLog(payload) {
 
     return {
       ok: true,
-      message: 'ログを更新しました。',
+      message: 'ログを更新しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
     };
@@ -495,7 +495,7 @@ function getWorkQuickItems_() {
 
 function normalizeWorkQuickItems_(items) {
   if (!Array.isArray(items)) {
-    throw new Error('よく使う内容の形式が正しくありません。');
+    throw new Error('よく使う内容の形式が正しくありません');
   }
 
   const seen = {};
@@ -510,7 +510,7 @@ function normalizeWorkQuickItems_(items) {
   });
 
   if (normalized.length > APP_CONFIG.maxWorkQuickItems) {
-    throw new Error('よく使う内容は最大' + APP_CONFIG.maxWorkQuickItems + '個までです。');
+    throw new Error('よく使う内容は最大' + APP_CONFIG.maxWorkQuickItems + '個までです');
   }
 
   return normalized;
@@ -518,7 +518,7 @@ function normalizeWorkQuickItems_(items) {
 
 function normalizeLessonItems_(items) {
   if (!Array.isArray(items)) {
-    throw new Error('コマ内容を選択してください。');
+    throw new Error('コマ内容を選択してください');
   }
 
   return items.map(function (item) {
@@ -554,7 +554,7 @@ function normalizeLessonContent_(value) {
   const text = trim_(value);
   const normalized = APP_CONFIG.lessonContentAliases[text] || text;
   if (!APP_CONFIG.lessonItemOptions.includes(normalized)) {
-    throw new Error('コマ内容を選択してください。');
+    throw new Error('コマ内容を選択してください');
   }
   return normalized;
 }
@@ -816,13 +816,13 @@ function finalizeSummary_(summary) {
   summary.workTotalHours = roundHours_(summary.workTotalMinutes).toFixed(2);
 
   if (summary.otherConfirmCount > 0) {
-    summary.warnings.push('その他・要確認のレッスンがあります。内容を確認してください。');
+    summary.warnings.push('その他・要確認のレッスンがあります 内容を確認してください');
   }
   if (summary.unfinishedCount > 0) {
-    summary.warnings.push('終了漏れの講師外業務があります。勤怠ログを確認してください。');
+    summary.warnings.push('終了漏れの講師外業務があります 勤怠ログを確認してください');
   }
   if (summary.unclassifiedCount > 0) {
-    summary.warnings.push('未分類のログがあります。分類を確認してください。');
+    summary.warnings.push('未分類のログがあります 分類を確認してください');
   }
 }
 
@@ -844,23 +844,7 @@ function writeMonthlySummary_(summary) {
     ['講師外業務合計時間', summary.workTotalHours],
     ['未分類件数', summary.unclassifiedCount],
     ['終了漏れ件数', summary.unfinishedCount],
-    [],
-    ['講師外業務の詳細一覧'],
-    ['日付', '開始', '終了', '内容', '分類', '分', '時間', 'メモ'],
   ];
-
-  summary.details.forEach(function (detail) {
-    rows.push([
-      detail.date,
-      detail.start,
-      detail.end,
-      detail.content,
-      detail.category,
-      detail.minutes,
-      detail.hours,
-      detail.note,
-    ]);
-  });
 
   if (summary.confirmNotes.length > 0) {
     rows.push([]);
@@ -889,12 +873,12 @@ function writeMonthlySummary_(summary) {
 function parseMonth_(month) {
   const match = String(month || '').match(/^(\d{4})-(\d{2})$/);
   if (!match) {
-    throw new Error('対象月を選択してください。');
+    throw new Error('対象月を選択してください');
   }
   const year = Number(match[1]);
   const monthNumber = Number(match[2]);
   if (monthNumber < 1 || monthNumber > 12) {
-    throw new Error('対象月が正しくありません。');
+    throw new Error('対象月が正しくありません');
   }
   return {
     year: year,
@@ -919,7 +903,7 @@ function parseDateInput_(value) {
 function parseLocalDateTime_(value) {
   const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/);
   if (!match) {
-    throw new Error('終了時刻を読み取れませんでした。');
+    throw new Error('終了時刻を読み取れませんでした');
   }
   return new Date(
     Number(match[1]),
@@ -961,7 +945,7 @@ function normalizeTimeText_(value) {
 function assertInList_(value, list, label) {
   const text = trim_(value);
   if (!list.includes(text)) {
-    throw new Error(label + 'を選択してください。');
+    throw new Error(label + 'を選択してください');
   }
   return text;
 }

@@ -57,7 +57,7 @@
     }
 
     .app {
-      width: min(100%, 690px);
+      width: min(100%, 1080px);
       margin: 0 auto;
       padding: 18px 16px 28px;
       overflow-x: hidden;
@@ -154,6 +154,11 @@
       border-radius: 14px;
       background: var(--card);
       box-shadow: var(--shadow);
+    }
+
+    .app-main {
+      display: grid;
+      gap: 0;
     }
 
     .history-card {
@@ -722,6 +727,61 @@
         flex-basis: 100%;
       }
     }
+
+    @media (min-width: 900px) {
+      .app {
+        padding: 24px 24px 36px;
+      }
+
+      .app-header {
+        padding-top: 4px;
+      }
+
+      .app-main {
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .app-main > .card {
+        margin: 0;
+      }
+
+      .lesson-card {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+      }
+
+      .work-card,
+      .recent-card {
+        grid-column: 2;
+      }
+
+      .monthly-card {
+        grid-column: 1 / -1;
+      }
+
+      .monthly-card .form-grid {
+        grid-template-columns: minmax(220px, 260px) minmax(180px, 240px);
+        align-items: end;
+      }
+
+      .monthly-card #summaryResult,
+      .monthly-card .button-row,
+      .monthly-card .copy-area {
+        grid-column: 1 / -1;
+      }
+
+      .koma-button {
+        min-height: 58px;
+        aspect-ratio: auto;
+        font-size: 1.55rem;
+      }
+
+      .lesson-items {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
   </style>
 </head>
 <body>
@@ -734,16 +794,16 @@
         </div>
         <div id="statusBadge" class="status-badge">停止中</div>
       </div>
-      <div id="testModeBanner" class="test-mode hidden">PCテストモード：このブラウザだけに保存します。Apps Script公開後はスプレッドシートに保存されます。</div>
+      <div id="testModeBanner" class="test-mode hidden">PCテストモード：保存先はこのブラウザです Apps Script公開後はスプレッドシートに保存されます</div>
       <div id="topAlert" class="alert hidden"></div>
     </header>
 
-    <main>
-      <section class="card" aria-labelledby="lessonTitle">
+    <main class="app-main">
+      <section class="card lesson-card" aria-labelledby="lessonTitle">
         <h2 id="lessonTitle" class="section-title">講師業務</h2>
         <div class="form-grid">
           <div class="field">
-            <div id="lessonAutoDate" class="muted">今日の日付で自動保存します。</div>
+            <div id="lessonAutoDate" class="muted">今日の日付で自動保存します</div>
             <input id="lessonDate" type="hidden">
           </div>
 
@@ -772,12 +832,12 @@
         </div>
       </section>
 
-      <section class="card" aria-labelledby="workTitle">
+      <section class="card work-card" aria-labelledby="workTitle">
         <h2 id="workTitle" class="section-title">講師外業務</h2>
         <div id="workArea"></div>
       </section>
 
-      <section class="card history-card" aria-labelledby="recentTitle">
+      <section class="card history-card recent-card" aria-labelledby="recentTitle">
         <h2 id="recentTitle" class="history-heading">
           <button id="recentToggleButton" class="history-toggle" type="button" aria-expanded="false" aria-controls="recentLogPanel">
             <span>勤怠歴</span>
@@ -789,7 +849,7 @@
         </div>
       </section>
 
-      <section class="card history-card" aria-labelledby="monthlyTitle">
+      <section class="card history-card monthly-card" aria-labelledby="monthlyTitle">
         <h2 id="monthlyTitle" class="history-heading">
           <button id="monthlyToggleButton" class="history-toggle" type="button" aria-expanded="false" aria-controls="monthlyPanel">
             <span>月次出力</span>
@@ -857,7 +917,7 @@
     <div class="dialog-body">
       <h2>よく使う内容を編集</h2>
       <div class="form-grid">
-        <div class="muted">最大6個まで登録できます。空欄は保存時に無視されます。</div>
+        <div class="muted">最大6個まで登録できます空欄は保存時に無視されます</div>
         <div id="quickItemInputs" class="quick-inputs"></div>
         <div class="button-row">
           <button id="saveQuickItemsButton" class="primary-button" type="button">保存</button>
@@ -965,7 +1025,7 @@
         state.recentLogs = data.recentLogs || [];
 
         $('todayLabel').textContent = data.todayDisplay;
-        $('lessonAutoDate').textContent = `${data.todayDisplay} で自動保存します。`;
+        $('lessonAutoDate').textContent = `${data.todayDisplay} で自動保存します`;
         $('lessonDate').value = data.todayIso;
         $('targetMonth').value = data.currentMonth;
         renderLessonKomaButtons();
@@ -987,7 +1047,7 @@
       renderHeader();
       renderWorkArea();
       renderRecentLogs();
-      showToast(result.message || '更新しました。');
+      showToast(result.message || '更新しました');
     }
 
     function renderHeader() {
@@ -996,7 +1056,7 @@
       if (state.activeWork) {
         badge.textContent = '講師外業務中';
         badge.classList.add('active');
-        alert.textContent = `未終了の講師外業務があります。開始：${state.activeWork.dateDisplay} ${state.activeWork.start}`;
+        alert.textContent = `未終了の講師外業務があります 開始：${state.activeWork.dateDisplay} ${state.activeWork.start}`;
         alert.classList.remove('hidden');
       } else {
         badge.textContent = '停止中';
@@ -1046,7 +1106,7 @@
       const container = $('recentLogList');
       const logs = state.recentLogs || [];
       if (!logs.length) {
-        container.innerHTML = '<div class="log-item log-empty">まだ記録がありません。</div>';
+        container.innerHTML = '<div class="log-item log-empty">まだ記録がありません</div>';
         return;
       }
 
@@ -1239,7 +1299,7 @@
         .filter(Boolean);
 
       if (items.length > 6) {
-        showToast('よく使う内容は最大6個までです。', true);
+        showToast('よく使う内容は最大6個までです', true);
         return;
       }
 
@@ -1252,7 +1312,7 @@
           $('startWorkContent').focus();
         });
         closeQuickItemsDialog();
-        showToast(result.message || 'よく使う内容を保存しました。');
+        showToast(result.message || 'よく使う内容を保存しました');
       } catch (error) {
         showError(error);
       } finally {
@@ -1317,7 +1377,7 @@
     }
 
     async function cancelActiveWork() {
-      if (!confirm('未退勤の出勤を取り消しますか？この出勤ログは削除されます。')) {
+      if (!confirm('未退勤の出勤を取り消しますか？この出勤ログは削除されます')) {
         return;
       }
 
@@ -1339,7 +1399,7 @@
         state.summary = summary;
         renderSummary(summary);
         $('copyTextButton').disabled = false;
-        showToast('申請用出力を作成しました。');
+        showToast('申請用出力を作成しました');
       } catch (error) {
         showError(error);
       } finally {
@@ -1360,15 +1420,6 @@
         `
         : '';
 
-      const details = summary.details.length
-        ? summary.details.map((detail) => `
-            <div class="detail-item">
-              <div class="detail-main">${escapeHtml(detail.shortDate)} ${escapeHtml(detail.start)}-${escapeHtml(detail.end)} ${escapeHtml(detail.content)}</div>
-              <div class="detail-sub">${escapeHtml(detail.category)} / ${escapeHtml(detail.minutes)}分 / ${escapeHtml(detail.hours)}時間</div>
-            </div>
-          `).join('')
-        : '<div class="detail-item">講師外業務の詳細はありません。</div>';
-
       $('summaryResult').innerHTML = `
         ${warnings}
         <div class="summary-compact">
@@ -1386,9 +1437,6 @@
           ${summaryRow('未分類件数', summary.unclassifiedCount)}
         </div>
         ${confirmNotes}
-
-        <h3>講師外業務の詳細一覧</h3>
-        <div class="detail-list">${details}</div>
       `;
       $('summaryResult').classList.remove('hidden');
       $('copyText').classList.add('hidden');
@@ -1412,11 +1460,11 @@
 
       try {
         await navigator.clipboard.writeText(text);
-        showToast('コピー用テキストを作成してコピーしました。');
+        showToast('コピー用テキストを作成してコピーしました');
       } catch (error) {
         $('copyText').focus();
         $('copyText').select();
-        showToast('コピー用テキストを作成しました。必要に応じて選択してコピーしてください。');
+        showToast('コピー用テキストを作成しました 必要に応じて選択してコピーしてください');
       }
     }
 
@@ -1424,29 +1472,9 @@
       const details = summary.details.length
         ? summary.details.map((detail) => `${detail.shortDate} ${detail.start}-${detail.end} ${detail.content}`)
         : ['（なし）'];
-      const notes = summary.confirmNotes.length
-        ? ['', '要確認メモ', ...summary.confirmNotes]
-        : [];
-
       return [
-        `対象月：${summary.monthLabel}`,
-        '',
-        'レッスン',
-        `通常コマ数：${summary.normalKoma}`,
-        `キャンプ10時コマ数：${summary.camp10Koma}`,
-        `レッスン合計コマ数：${summary.lessonTotalKoma}`,
-        `要確認コマ数：${summary.otherConfirmKoma}`,
-        '',
-        '講師外業務',
-        `教材開発：${summary.workHours['教材開発']}`,
-        `SNS：${summary.workHours.SNS}`,
-        `研修：${summary.workHours['研修']}`,
-        `その他MTGなど：${summary.workHours['その他MTGなど']}`,
-        `講師外業務合計：${summary.workTotalHours}`,
-        '',
         '講師外業務詳細',
         ...details,
-        ...notes,
       ].join('\n');
     }
 
@@ -1492,7 +1520,7 @@
         localStorage.setItem(LOCAL_QUICK_ITEMS_KEY, JSON.stringify(normalized));
         return {
           ok: true,
-          message: 'よく使う内容を保存しました。（PCテスト）',
+          message: 'よく使う内容を保存しました（PCテスト）',
           workQuickItems: normalized,
         };
       },
@@ -1530,7 +1558,7 @@
         localWriteLogs(logs);
         return {
           ok: true,
-          message: 'レッスンを保存しました。（PCテスト）',
+          message: 'レッスンを保存しました（PCテスト）',
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
         };
@@ -1539,12 +1567,12 @@
       startWork(payload) {
         const logs = localReadLogs();
         if (localFindActiveWork(logs)) {
-          throw new Error('未終了の講師外業務があります。先に退勤してください。');
+          throw new Error('未終了の講師外業務があるため、先に退勤してください');
         }
 
         const content = String(payload && payload.content || '').trim();
         if (!content) {
-          throw new Error('出勤時に内容を入力してください。');
+          throw new Error('出勤時に内容を入力してください');
         }
 
         const now = new Date();
@@ -1571,7 +1599,7 @@
         localWriteLogs(logs);
         return {
           ok: true,
-          message: '出勤しました。（PCテスト）',
+          message: '出勤しました（PCテスト）',
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
         };
@@ -1581,7 +1609,7 @@
         const logs = localReadLogs();
         const active = localFindActiveWork(logs);
         if (!active) {
-          throw new Error('開始中の講師外業務がありません。');
+          throw new Error('開始中の講師外業務がありません');
         }
 
         const now = new Date();
@@ -1599,7 +1627,7 @@
         localWriteLogs(logs);
         return {
           ok: true,
-          message: '退勤しました。（PCテスト）',
+          message: '退勤しました（PCテスト）',
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
         };
@@ -1609,12 +1637,12 @@
         const logs = localReadLogs();
         const active = localFindActiveWork(logs);
         if (!active) {
-          throw new Error('取り消せる未退勤の出勤がありません。');
+          throw new Error('取り消せる未退勤の出勤がありません');
         }
         localWriteLogs(logs.filter((log) => log.id !== active.id));
         return {
           ok: true,
-          message: '出勤を取り消しました。（PCテスト）',
+          message: '出勤を取り消しました（PCテスト）',
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
         };
@@ -1641,7 +1669,7 @@
       if (!hasAppsScript()) {
         return Promise.resolve().then(() => {
           if (!localApi[functionName]) {
-            throw new Error(`PCテストモードでは ${functionName} を使えません。`);
+            throw new Error(`PCテストモードでは ${functionName} を使えません`);
           }
           return localApi[functionName](...args);
         });
@@ -1751,7 +1779,7 @@
 
     function buildLocalMonthlySummary(month) {
       if (!/^\d{4}-\d{2}$/.test(month || '')) {
-        throw new Error('対象月を選択してください。');
+        throw new Error('対象月を選択してください');
       }
       const monthLabel = `${Number(month.slice(0, 4))}年${Number(month.slice(5, 7))}月`;
       const summary = {
@@ -1831,9 +1859,9 @@
       });
       summary.workTotalHours = roundHoursClient(summary.workTotalMinutes).toFixed(2);
 
-      if (summary.otherConfirmCount > 0) summary.warnings.push('その他・要確認のレッスンがあります。内容を確認してください。');
-      if (summary.unfinishedCount > 0) summary.warnings.push('終了漏れの講師外業務があります。勤怠ログを確認してください。');
-      if (summary.unclassifiedCount > 0) summary.warnings.push('未分類のログがあります。分類を確認してください。');
+      if (summary.otherConfirmCount > 0) summary.warnings.push('その他・要確認のレッスンがあります 内容を確認してください');
+      if (summary.unfinishedCount > 0) summary.warnings.push('終了漏れの講師外業務があります 勤怠ログを確認してください');
+      if (summary.unclassifiedCount > 0) summary.warnings.push('未分類のログがあります 分類を確認してください');
       return summary;
     }
 
@@ -1898,7 +1926,7 @@
 
     function showError(error) {
       const message = error && error.message ? error.message.replace(/^Exception:\s*/, '') : String(error);
-      showToast(message || 'エラーが発生しました。', true);
+      showToast(message || 'エラーが発生しました', true);
     }
 
     function escapeHtml(value) {
