@@ -156,6 +156,46 @@
       box-shadow: var(--shadow);
     }
 
+    .history-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .history-heading {
+      margin: 0;
+    }
+
+    .history-toggle {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 64px;
+      padding: 18px 22px;
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+      font-size: 1.22rem;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    .history-chevron {
+      color: var(--muted);
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: transform 0.16s ease;
+    }
+
+    .history-toggle[aria-expanded="true"] .history-chevron {
+      transform: rotate(180deg);
+    }
+
+    .history-panel {
+      padding: 0 22px 16px;
+    }
+
     .section-title {
       display: flex;
       align-items: center;
@@ -391,32 +431,46 @@
 
     .log-list {
       display: grid;
-      gap: 10px;
+      gap: 0;
     }
 
     .log-item {
       display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) 58px;
+      align-items: center;
       gap: 8px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfdfd;
+      min-height: 34px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.95rem;
     }
 
-    .log-main {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
+    .log-item:last-child {
+      border-bottom: 0;
     }
 
-    .log-title {
-      font-weight: 800;
-    }
-
-    .log-meta {
+    .log-empty {
+      display: block;
       color: var(--muted);
-      font-size: 0.92rem;
+    }
+
+    .log-date,
+    .log-main,
+    .log-value {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .log-date,
+    .log-value {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .log-value {
+      font-weight: 700;
+      text-align: right;
     }
 
     .mini-actions {
@@ -614,8 +668,7 @@
         padding: 12px;
       }
 
-      .title-row,
-      .log-main {
+      .title-row {
         align-items: stretch;
         flex-direction: column;
       }
@@ -627,6 +680,19 @@
 
       .card {
         padding: 16px;
+      }
+
+      .history-card {
+        padding: 0;
+      }
+
+      .history-toggle {
+        min-height: 54px;
+        padding: 14px 16px;
+      }
+
+      .history-panel {
+        padding: 0 16px 14px;
       }
 
       .button-row > button {
@@ -686,6 +752,18 @@
       <section class="card" aria-labelledby="workTitle">
         <h2 id="workTitle" class="section-title">講師外業務</h2>
         <div id="workArea"></div>
+      </section>
+
+      <section class="card history-card" aria-labelledby="recentTitle">
+        <h2 id="recentTitle" class="history-heading">
+          <button id="recentToggleButton" class="history-toggle" type="button" aria-expanded="false" aria-controls="recentLogPanel">
+            <span>勤怠歴</span>
+            <span class="history-chevron" aria-hidden="true">⌄</span>
+          </button>
+        </h2>
+        <div id="recentLogPanel" class="history-panel hidden">
+          <div id="recentLogList" class="log-list"></div>
+        </div>
       </section>
 
       <section class="card" aria-labelledby="monthlyTitle">
@@ -788,6 +866,7 @@
       $('cancelStartWorkButton').addEventListener('click', closeStartWorkDialog);
       $('saveQuickItemsButton').addEventListener('click', saveQuickItems);
       $('closeQuickItemsButton').addEventListener('click', closeQuickItemsDialog);
+      $('recentToggleButton').addEventListener('click', toggleRecentLogs);
     }
 
     async function loadApp() {
@@ -809,6 +888,7 @@
         renderLessonKomaButtons();
         renderLessonItemSelectors();
         renderWorkArea();
+        renderRecentLogs();
         renderHeader();
         $('testModeBanner').classList.toggle('hidden', hasAppsScript());
       } catch (error) {
@@ -823,6 +903,7 @@
       state.recentLogs = result.recentLogs || [];
       renderHeader();
       renderWorkArea();
+      renderRecentLogs();
       showToast(result.message || '更新しました。');
     }
 
@@ -876,6 +957,62 @@
       `;
       $('finishWorkButton').addEventListener('click', finishWork);
       $('cancelActiveWorkButton').addEventListener('click', cancelActiveWork);
+    }
+
+    function renderRecentLogs() {
+      const container = $('recentLogList');
+      const logs = state.recentLogs || [];
+      if (!logs.length) {
+        container.innerHTML = '<div class="log-item log-empty">まだ記録がありません。</div>';
+        return;
+      }
+
+      container.innerHTML = logs.map((log) => {
+        return `
+          <div class="log-item">
+            <div class="log-date">${escapeHtml(getRecentLogDate(log))}</div>
+            <div class="log-main">${escapeHtml(getRecentLogMain(log))}</div>
+            <div class="log-value">${escapeHtml(getRecentLogValue(log))}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleRecentLogs() {
+      const button = $('recentToggleButton');
+      const panel = $('recentLogPanel');
+      const nextExpanded = button.getAttribute('aria-expanded') !== 'true';
+      button.setAttribute('aria-expanded', String(nextExpanded));
+      panel.classList.toggle('hidden', !nextExpanded);
+    }
+
+    function getRecentLogDate(log) {
+      if (log.dateIso) {
+        return shortDateFromIso(log.dateIso);
+      }
+      const match = String(log.dateDisplay || '').match(/^\d{4}\/(\d{1,2})\/(\d{1,2})$/);
+      return match ? `${Number(match[1])}/${Number(match[2])}` : '';
+    }
+
+    function getRecentLogValue(log) {
+      if (log.type === 'レッスン') {
+        return log.koma ? `${log.koma}コマ` : '';
+      }
+      if (log.hours !== '' && typeof log.hours !== 'undefined') {
+        return `${Number(log.hours).toFixed(2)}h`;
+      }
+      if (log.minutes !== '' && typeof log.minutes !== 'undefined') {
+        return `${roundHoursClient(log.minutes).toFixed(2)}h`;
+      }
+      return log.start ? `${log.start}-` : '';
+    }
+
+    function getRecentLogMain(log) {
+      const kind = log.type === 'レッスン'
+        ? log.category || '通常コマ'
+        : log.category || log.type || '';
+      const content = log.content || log.note || '';
+      return [kind, content].filter(Boolean).join('　');
     }
 
     function renderLessonKomaButtons() {
@@ -1228,7 +1365,7 @@
           lessonItemOptions: ['CB', 'CS', 'プラコ', '体験会', 'キャンプ', 'キャンプ(10時)', 'その他・要確認'],
           workQuickItems: localReadQuickItems(),
           activeWork: localFindActiveWork(),
-          recentLogs: [],
+          recentLogs: localGetRecentLogs(),
         };
       },
 
@@ -1250,6 +1387,7 @@
         const koma = Number(payload.koma || 1);
         const note = String(payload.note || '').trim();
         const content = lessonItems.join(' / ') + (note ? ` / ${note}` : '');
+        const now = new Date();
         logs.push({
           id: localCreateId(),
           type: 'レッスン',
@@ -1264,6 +1402,9 @@
           minutes: '',
           hours: '',
           note,
+          createdDisplay: toDateTimeDisplay(now),
+          updatedDisplay: toDateTimeDisplay(now),
+          sortTime: now.getTime(),
           isActive: false,
         });
         localWriteLogs(logs);
@@ -1271,7 +1412,7 @@
           ok: true,
           message: 'レッスンを保存しました。（PCテスト）',
           activeWork: localFindActiveWork(),
-          recentLogs: [],
+          recentLogs: localGetRecentLogs(),
         };
       },
 
@@ -1302,6 +1443,9 @@
           minutes: '',
           hours: '',
           note: String(payload.note || ''),
+          createdDisplay: toDateTimeDisplay(now),
+          updatedDisplay: toDateTimeDisplay(now),
+          sortTime: now.getTime(),
           isActive: true,
         });
         localWriteLogs(logs);
@@ -1309,7 +1453,7 @@
           ok: true,
           message: '出勤しました。（PCテスト）',
           activeWork: localFindActiveWork(),
-          recentLogs: [],
+          recentLogs: localGetRecentLogs(),
         };
       },
 
@@ -1330,12 +1474,14 @@
         active.minutes = minutes;
         active.hours = roundHoursClient(minutes).toFixed(2);
         active.isActive = false;
+        active.updatedDisplay = toDateTimeDisplay(now);
+        active.sortTime = now.getTime();
         localWriteLogs(logs);
         return {
           ok: true,
           message: '退勤しました。（PCテスト）',
           activeWork: localFindActiveWork(),
-          recentLogs: [],
+          recentLogs: localGetRecentLogs(),
         };
       },
 
@@ -1350,7 +1496,7 @@
           ok: true,
           message: '出勤を取り消しました。（PCテスト）',
           activeWork: localFindActiveWork(),
-          recentLogs: [],
+          recentLogs: localGetRecentLogs(),
         };
       },
 
@@ -1399,6 +1545,13 @@
 
     function localWriteLogs(logs) {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(logs));
+    }
+
+    function localGetRecentLogs(logs = localReadLogs()) {
+      return logs
+        .map((log, index) => Object.assign({ fallbackSortTime: index }, log))
+        .sort((a, b) => (Number(b.sortTime || 0) - Number(a.sortTime || 0)) || (b.fallbackSortTime - a.fallbackSortTime))
+        .slice(0, 5);
     }
 
     function localReadQuickItems() {
@@ -1543,6 +1696,10 @@
 
     function toJapaneseDate(date) {
       return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    }
+
+    function toDateTimeDisplay(date) {
+      return `${displayDateFromIso(toDateIso(date))} ${toTimeText(date)}`;
     }
 
     function displayDateFromIso(dateIso) {

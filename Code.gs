@@ -557,6 +557,7 @@ function rowToLog_(values, rowNumber) {
     note: String(values[COL.note - 1] || ''),
     createdDisplay: formatValueDate_(createdAt, 'yyyy/MM/dd HH:mm'),
     updatedDisplay: formatValueDate_(updatedAt, 'yyyy/MM/dd HH:mm'),
+    sortTime: Math.max(dateValueToMillis_(updatedAt), dateValueToMillis_(createdAt), rowNumber),
     isActive: values[COL.type - 1] === APP_CONFIG.workType && Boolean(values[COL.start - 1]) && !values[COL.end - 1],
   };
 }
@@ -564,7 +565,7 @@ function rowToLog_(values, rowNumber) {
 function getRecentLogs_(limit) {
   return readLogObjects_()
     .sort(function (a, b) {
-      return b.rowNumber - a.rowNumber;
+      return (b.sortTime - a.sortTime) || (b.rowNumber - a.rowNumber);
     })
     .slice(0, limit || 5);
 }
@@ -917,6 +918,14 @@ function toNumberOrBlank_(value) {
   }
   const number = Number(value);
   return isNaN(number) ? '' : number;
+}
+
+function dateValueToMillis_(value) {
+  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    return value.getTime();
+  }
+  const parsed = new Date(String(value || ''));
+  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
 }
 
 function roundHours_(minutes) {
