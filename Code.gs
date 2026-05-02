@@ -1,3 +1,52 @@
+const COURSE_CONFIG = {
+  lessonContentOptions: [
+    'CB',
+    'CS',
+    'MJ',
+    'MS',
+    'CE',
+    'プラコ',
+    '体験会',
+    '振替',
+    '補講',
+    'キャンプ10時',
+    'キャンプその他',
+    'その他・要確認',
+  ],
+  lessonBillingRules: {
+    CB: '通常コマ',
+    CS: '通常コマ',
+    MJ: '通常コマ',
+    MS: '通常コマ',
+    CE: '通常コマ',
+    'プラコ': '通常コマ',
+    '体験会': '通常コマ',
+    '振替': '通常コマ',
+    '補講': '通常コマ',
+    'キャンプ10時': 'キャンプ10時',
+    'キャンプその他': '通常コマ',
+    'その他・要確認': 'その他・要確認',
+  },
+  lessonContentLabels: {
+    CB: 'コマンドブースター',
+    CS: 'コマンドスタンダード',
+    MJ: 'マイプロジュニア',
+    MS: 'マイプロスタンダード',
+    CE: 'CE',
+    'プラコ': 'プライベートコース',
+    '体験会': '体験会',
+    '振替': '振替',
+    '補講': '補講',
+    'キャンプ10時': 'キャンプ10時',
+    'キャンプその他': 'キャンプその他',
+    'その他・要確認': 'その他・要確認',
+  },
+  lessonContentAliases: {
+    'キャンプ(10時)': 'キャンプ10時',
+    'キャンプ': 'キャンプその他',
+  },
+};
+
 const APP_CONFIG = {
   timeZone: 'Asia/Tokyo',
   logSheetName: '勤怠ログ',
@@ -20,7 +69,10 @@ const APP_CONFIG = {
   lessonType: 'レッスン',
   workType: '講師外業務',
   lessonCategories: ['通常コマ', 'キャンプ10時', 'その他・要確認'],
-  lessonItemOptions: ['CB', 'CS', 'プラコ', '体験会', 'キャンプ', 'キャンプ(10時)', 'その他・要確認'],
+  lessonItemOptions: COURSE_CONFIG.lessonContentOptions,
+  lessonBillingRules: COURSE_CONFIG.lessonBillingRules,
+  lessonContentLabels: COURSE_CONFIG.lessonContentLabels,
+  lessonContentAliases: COURSE_CONFIG.lessonContentAliases,
   workCategories: ['教材開発', 'SNS', '研修', 'その他MTGなど'],
   workQuickItemsPropertyKey: 'workQuickItems',
   defaultWorkQuickItems: ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務', 'UL面談', '模擬レッスン'],
@@ -83,6 +135,9 @@ function getInitialData() {
     lessonCategories: APP_CONFIG.lessonCategories,
     workCategories: APP_CONFIG.workCategories,
     lessonItemOptions: APP_CONFIG.lessonItemOptions,
+    lessonContentOptions: APP_CONFIG.lessonItemOptions,
+    lessonBillingRules: APP_CONFIG.lessonBillingRules,
+    lessonContentLabels: APP_CONFIG.lessonContentLabels,
     lessonQuickItems: APP_CONFIG.lessonItemOptions,
     workQuickItems: getWorkQuickItems_(),
     activeWork: findActiveWork_(),
@@ -111,7 +166,7 @@ function saveLesson(payload) {
     const category = getLessonCategoryByItems_(lessonItems);
     const koma = Number(payload.koma);
     const note = trim_(payload.note);
-    const content = lessonItems.join(' / ') + (note ? ' / ' + note : '');
+    const content = lessonItems.join(' / ');
 
     if (!koma || koma < 1 || koma > 4) {
       throw new Error('コマ数は1から4の範囲で選んでください。');
@@ -467,31 +522,79 @@ function normalizeLessonItems_(items) {
   }
 
   return items.map(function (item) {
-    return assertInList_(item, APP_CONFIG.lessonItemOptions, 'コマ内容');
+    return normalizeLessonContent_(item);
   });
 }
 
 function getLessonCategoryByItems_(items) {
-  if (items.some(function (item) {
-    return item === 'その他・要確認';
+  const categories = items.map(function (item) {
+    return getLessonBillingCategory_(item);
+  });
+
+  if (categories.some(function (category) {
+    return category === 'その他・要確認';
   })) {
     return 'その他・要確認';
   }
 
-  const hasCamp10 = items.some(function (item) {
-    return item === 'キャンプ(10時)';
+  const hasCamp10 = categories.some(function (category) {
+    return category === 'キャンプ10時';
   });
-  const hasNormal = items.some(function (item) {
-    return item !== 'キャンプ(10時)';
+  const hasNormal = categories.some(function (category) {
+    return category === '通常コマ';
   });
 
-  if (hasCamp10 && hasNormal) {
-    return 'その他・要確認';
-  }
-  if (hasCamp10) {
+  if (hasCamp10 && !hasNormal) {
     return 'キャンプ10時';
   }
   return '通常コマ';
+}
+
+function normalizeLessonContent_(value) {
+  const text = trim_(value);
+  const normalized = APP_CONFIG.lessonContentAliases[text] || text;
+  if (!APP_CONFIG.lessonItemOptions.includes(normalized)) {
+    throw new Error('コマ内容を選択してください。');
+  }
+  return normalized;
+}
+
+function getLessonBillingCategory_(content) {
+  return APP_CONFIG.lessonBillingRules[normalizeLessonContent_(content)] || 'その他・要確認';
+}
+
+function extractLessonContents_(log) {
+  const expectedKoma = Number(log.koma || 0);
+  const values = String(log.content || '')
+    .split('/')
+    .map(function (item) {
+      return trim_(item);
+    })
+    .filter(Boolean)
+    .map(function (item) {
+      const normalized = APP_CONFIG.lessonContentAliases[item] || item;
+      return APP_CONFIG.lessonItemOptions.includes(normalized) ? normalized : '';
+    })
+    .filter(Boolean);
+
+  if (values.length > 0) {
+    return expectedKoma > 0 ? values.slice(0, expectedKoma) : values;
+  }
+
+  if (APP_CONFIG.lessonCategories.includes(log.category)) {
+    const fallback = getFallbackLessonContent_(log.category);
+    return Array.from({ length: expectedKoma }, function () {
+      return fallback;
+    });
+  }
+
+  return [];
+}
+
+function getFallbackLessonContent_(category) {
+  if (category === 'キャンプ10時') return 'キャンプ10時';
+  if (category === 'その他・要確認') return 'その他・要確認';
+  return 'CB';
 }
 
 function getLogSheet_() {
@@ -646,22 +749,25 @@ function createEmptySummary_(target) {
 }
 
 function aggregateLesson_(summary, log) {
-  const koma = Number(log.koma || 0);
-  if (!APP_CONFIG.lessonCategories.includes(log.category)) {
+  const contents = extractLessonContents_(log);
+  if (contents.length === 0) {
     summary.unclassifiedCount += 1;
     summary.confirmNotes.push('未分類: ' + log.dateDisplay + ' レッスン ' + (log.content || '内容なし'));
     return;
   }
 
-  if (log.category === '通常コマ') {
-    summary.normalKoma += koma;
-  } else if (log.category === 'キャンプ10時') {
-    summary.camp10Koma += koma;
-  } else if (log.category === 'その他・要確認') {
-    summary.otherConfirmKoma += koma;
-    summary.otherConfirmCount += 1;
-    summary.confirmNotes.push('その他・要確認: ' + log.dateDisplay + ' ' + (log.content || '内容なし') + noteSuffix_(log.note));
-  }
+  contents.forEach(function (content) {
+    const category = getLessonBillingCategory_(content);
+    if (category === '通常コマ') {
+      summary.normalKoma += 1;
+    } else if (category === 'キャンプ10時') {
+      summary.camp10Koma += 1;
+    } else if (category === 'その他・要確認') {
+      summary.otherConfirmKoma += 1;
+      summary.otherConfirmCount += 1;
+      summary.confirmNotes.push('その他・要確認: ' + log.dateDisplay + ' ' + content + noteSuffix_(log.note));
+    }
+  });
 }
 
 function aggregateWork_(summary, log) {
@@ -730,7 +836,7 @@ function writeMonthlySummary_(summary) {
     ['通常コマ数', summary.normalKoma],
     ['キャンプ10時コマ数', summary.camp10Koma],
     ['レッスン合計コマ数', summary.lessonTotalKoma],
-    ['その他・要確認コマ数', summary.otherConfirmKoma],
+    ['要確認コマ数', summary.otherConfirmKoma],
     ['教材開発時間', summary.workHours['教材開発']],
     ['SNS時間', summary.workHours.SNS],
     ['研修時間', summary.workHours['研修']],
@@ -738,7 +844,6 @@ function writeMonthlySummary_(summary) {
     ['講師外業務合計時間', summary.workTotalHours],
     ['未分類件数', summary.unclassifiedCount],
     ['終了漏れ件数', summary.unfinishedCount],
-    ['その他・要確認件数', summary.otherConfirmCount],
     [],
     ['講師外業務の詳細一覧'],
     ['日付', '開始', '終了', '内容', '分類', '分', '時間', 'メモ'],
