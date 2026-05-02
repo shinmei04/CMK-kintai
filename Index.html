@@ -766,23 +766,30 @@
         </div>
       </section>
 
-      <section class="card" aria-labelledby="monthlyTitle">
-        <h2 id="monthlyTitle" class="section-title">月次出力</h2>
-        <div class="form-grid">
-          <div class="field">
-            <label for="targetMonth">対象月</label>
-            <input id="targetMonth" type="month">
+      <section class="card history-card" aria-labelledby="monthlyTitle">
+        <h2 id="monthlyTitle" class="history-heading">
+          <button id="monthlyToggleButton" class="history-toggle" type="button" aria-expanded="false" aria-controls="monthlyPanel">
+            <span>月次出力</span>
+            <span class="history-chevron" aria-hidden="true">⌄</span>
+          </button>
+        </h2>
+        <div id="monthlyPanel" class="history-panel hidden">
+          <div class="form-grid">
+            <div class="field">
+              <label for="targetMonth">対象月</label>
+              <input id="targetMonth" type="month">
+            </div>
+
+            <button id="loadSummaryButton" class="primary-button">申請用出力</button>
+
+            <div id="summaryResult" class="hidden"></div>
+
+            <div class="button-row">
+              <button id="copyTextButton" class="secondary-button" disabled>コピー用テキストを作成</button>
+            </div>
+
+            <textarea id="copyText" class="copy-area hidden" readonly></textarea>
           </div>
-
-          <button id="loadSummaryButton" class="primary-button">申請用出力</button>
-
-          <div id="summaryResult" class="hidden"></div>
-
-          <div class="button-row">
-            <button id="copyTextButton" class="secondary-button" disabled>コピー用テキストを作成</button>
-          </div>
-
-          <textarea id="copyText" class="copy-area hidden" readonly></textarea>
         </div>
       </section>
     </main>
@@ -867,6 +874,7 @@
       $('saveQuickItemsButton').addEventListener('click', saveQuickItems);
       $('closeQuickItemsButton').addEventListener('click', closeQuickItemsDialog);
       $('recentToggleButton').addEventListener('click', toggleRecentLogs);
+      $('monthlyToggleButton').addEventListener('click', toggleMonthlyOutput);
     }
 
     async function loadApp() {
@@ -981,6 +989,14 @@
     function toggleRecentLogs() {
       const button = $('recentToggleButton');
       const panel = $('recentLogPanel');
+      const nextExpanded = button.getAttribute('aria-expanded') !== 'true';
+      button.setAttribute('aria-expanded', String(nextExpanded));
+      panel.classList.toggle('hidden', !nextExpanded);
+    }
+
+    function toggleMonthlyOutput() {
+      const button = $('monthlyToggleButton');
+      const panel = $('monthlyPanel');
       const nextExpanded = button.getAttribute('aria-expanded') !== 'true';
       button.setAttribute('aria-expanded', String(nextExpanded));
       panel.classList.toggle('hidden', !nextExpanded);
