@@ -462,7 +462,7 @@ function getMonthlySummary(month) {
     }
 
     if (log.type === APP_CONFIG.workType) {
-      aggregateWork_(summary, log);
+      aggregateWork_(summary, log); 
     }
   });
 
