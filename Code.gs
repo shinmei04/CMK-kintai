@@ -9,8 +9,7 @@ const COURSE_CONFIG = {
     '体験会',
     '振替',
     '補講',
-    'キャンプ10時',
-    'キャンプその他',
+    'キャンプ',
     'その他・要確認',
   ],
   lessonBillingRules: {
@@ -23,8 +22,7 @@ const COURSE_CONFIG = {
     '体験会': '通常コマ',
     '振替': '通常コマ',
     '補講': '通常コマ',
-    'キャンプ10時': 'キャンプ10時',
-    'キャンプその他': 'キャンプ10時',
+    'キャンプ': 'キャンプ',
     'その他・要確認': 'その他・要確認',
   },
   lessonContentLabels: {
@@ -37,13 +35,13 @@ const COURSE_CONFIG = {
     '体験会': '体験会',
     '振替': '振替',
     '補講': '補講',
-    'キャンプ10時': 'キャンプ10時',
-    'キャンプその他': 'キャンプその他',
+    'キャンプ': 'キャンプ',
     'その他・要確認': 'その他・要確認',
   },
   lessonContentAliases: {
-    'キャンプ(10時)': 'キャンプ10時',
-    'キャンプ': 'キャンプその他',
+    'キャンプ10時': 'キャンプ',
+    'キャンプその他': 'キャンプ',
+    'キャンプ(10時)': 'キャンプ',
   },
 };
 
@@ -68,7 +66,7 @@ const APP_CONFIG = {
   ],
   lessonType: 'レッスン',
   workType: '講師外業務',
-  lessonCategories: ['通常コマ', 'キャンプ10時', 'その他・要確認'],
+  lessonCategories: ['通常コマ', 'キャンプ', 'その他・要確認'],
   lessonItemOptions: COURSE_CONFIG.lessonContentOptions,
   lessonBillingRules: COURSE_CONFIG.lessonBillingRules,
   lessonContentLabels: COURSE_CONFIG.lessonContentLabels,
@@ -531,7 +529,7 @@ function buildSalarySummary_(month) {
       const count = contents.length || Number(log.koma || 0);
       let campCount = 0;
       contents.forEach(function (content) {
-        if (getLessonBillingCategory_(content) === 'キャンプ10時') {
+        if (getLessonBillingCategory_(content) === 'キャンプ') {
           campCount += 1;
         }
       });
@@ -638,15 +636,15 @@ function getLessonCategoryByItems_(items) {
     return 'その他・要確認';
   }
 
-  const hasCamp10 = categories.some(function (category) {
-    return category === 'キャンプ10時';
+  const hasCamp = categories.some(function (category) {
+    return category === 'キャンプ';
   });
   const hasNormal = categories.some(function (category) {
     return category === '通常コマ';
   });
 
-  if (hasCamp10 && !hasNormal) {
-    return 'キャンプ10時';
+  if (hasCamp && !hasNormal) {
+    return 'キャンプ';
   }
   return '通常コマ';
 }
@@ -682,7 +680,7 @@ function extractLessonContents_(log) {
     return expectedKoma > 0 ? values.slice(0, expectedKoma) : values;
   }
 
-  if (APP_CONFIG.lessonCategories.includes(log.category)) {
+  if (APP_CONFIG.lessonCategories.includes(log.category) || log.category === 'キャンプ10時') {
     const fallback = getFallbackLessonContent_(log.category);
     return Array.from({ length: expectedKoma }, function () {
       return fallback;
@@ -693,7 +691,7 @@ function extractLessonContents_(log) {
 }
 
 function getFallbackLessonContent_(category) {
-  if (category === 'キャンプ10時') return 'キャンプ10時';
+  if (category === 'キャンプ' || category === 'キャンプ10時') return 'キャンプ';
   if (category === 'その他・要確認') return 'その他・要確認';
   return 'CB';
 }
@@ -854,6 +852,7 @@ function createEmptySummary_(target) {
     month: target.monthValue,
     monthLabel: target.monthLabel,
     normalKoma: 0,
+    campKoma: 0,
     camp10Koma: 0,
     otherConfirmKoma: 0,
     lessonTotalKoma: 0,
@@ -892,8 +891,9 @@ function aggregateLesson_(summary, log) {
     const category = getLessonBillingCategory_(content);
     if (category === '通常コマ') {
       summary.normalKoma += 1;
-    } else if (category === 'キャンプ10時') {
-      summary.camp10Koma += 1;
+    } else if (category === 'キャンプ') {
+      summary.campKoma += 1;
+      summary.camp10Koma = summary.campKoma;
     } else if (category === 'その他・要確認') {
       summary.otherConfirmKoma += 1;
       summary.otherConfirmCount += 1;
@@ -941,7 +941,8 @@ function aggregateWork_(summary, log) {
 }
 
 function finalizeSummary_(summary) {
-  summary.lessonTotalKoma = summary.normalKoma + summary.camp10Koma;
+  summary.camp10Koma = summary.campKoma;
+  summary.lessonTotalKoma = summary.normalKoma + summary.campKoma;
 
   APP_CONFIG.workCategories.forEach(function (category) {
     const minutes = summary.workMinutes[category] || 0;
@@ -969,7 +970,7 @@ function writeMonthlySummary_(summary) {
     ['項目', '値'],
     ['対象月', summary.monthLabel],
     ['通常コマ数', summary.normalKoma],
-    ['キャンプ10時コマ数', summary.camp10Koma],
+    ['キャンプコマ数', summary.campKoma],
     ['レッスン合計コマ数', summary.lessonTotalKoma],
     ['要確認コマ数', summary.otherConfirmKoma],
     ['教材開発時間', summary.workHours['教材開発']],

@@ -1061,8 +1061,7 @@
       '体験会',
       '振替',
       '補講',
-      'キャンプ10時',
-      'キャンプその他',
+      'キャンプ',
       'その他・要確認',
     ];
     const LESSON_BILLING_RULES = {
@@ -1075,19 +1074,19 @@
       '体験会': '通常コマ',
       '振替': '通常コマ',
       '補講': '通常コマ',
-      'キャンプ10時': 'キャンプ10時',
-      'キャンプその他': 'キャンプ10時',
+      'キャンプ': 'キャンプ',
       'その他・要確認': 'その他・要確認',
     };
     const LESSON_CONTENT_ALIASES = {
-      'キャンプ(10時)': 'キャンプ10時',
-      'キャンプ': 'キャンプその他',
+      'キャンプ10時': 'キャンプ',
+      'キャンプその他': 'キャンプ',
+      'キャンプ(10時)': 'キャンプ',
     };
     const LOCAL_STORAGE_KEY = 'kintai_logs_pc_test_v1';
     const LOCAL_QUICK_ITEMS_KEY = 'kintai_work_quick_items_v1';
     const DEFAULT_WORK_QUICK_ITEMS = ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務'];
     const WORK_CATEGORIES = ['教材開発', 'SNS', '研修', 'その他MTGなど'];
-    const LESSON_CATEGORIES = ['通常コマ', 'キャンプ10時', 'その他・要確認'];
+    const LESSON_CATEGORIES = ['通常コマ', 'キャンプ', 'その他・要確認'];
     const LESSON_PAY_PER_KOMA = 2200;
     const CAMP_LESSON_PAY_PER_KOMA = 2350;
     const WORK_HOURLY_PAY = 1300;
@@ -1553,7 +1552,7 @@
       group.append(
         createSummaryRow('通常コマ', `${summary.normalKoma || 0}`),
         createSummaryRow('講師外業務', formatDecimalHours(summary.workTotalHours)),
-        createSummaryRow('キャンプ', `${summary.camp10Koma || 0}`),
+        createSummaryRow('キャンプ', `${getSummaryCampKoma(summary)}`),
         createSummaryRow('要確認件数', `${getSummaryConfirmCount(summary)}`)
       );
 
@@ -1601,7 +1600,7 @@
         '',
         'レッスン',
         `通常コマ数：${summary.normalKoma}`,
-        `キャンプ10時コマ数：${summary.camp10Koma}`,
+        `キャンプコマ数：${getSummaryCampKoma(summary)}`,
         `レッスン合計コマ数：${summary.lessonTotalKoma}`,
         '',
         '講師外業務',
@@ -2234,6 +2233,7 @@
         month,
         monthLabel,
         normalKoma: 0,
+        campKoma: 0,
         camp10Koma: 0,
         otherConfirmKoma: 0,
         lessonTotalKoma: 0,
@@ -2261,8 +2261,9 @@
             const category = getLessonBillingCategoryClient(content);
             if (category === '通常コマ') {
               summary.normalKoma += 1;
-            } else if (category === 'キャンプ10時') {
-              summary.camp10Koma += 1;
+            } else if (category === 'キャンプ') {
+              summary.campKoma += 1;
+              summary.camp10Koma = summary.campKoma;
             } else {
               summary.otherConfirmKoma += 1;
               summary.otherConfirmCount += 1;
@@ -2297,7 +2298,8 @@
         });
       });
 
-      summary.lessonTotalKoma = summary.normalKoma + summary.camp10Koma;
+      summary.camp10Koma = summary.campKoma;
+      summary.lessonTotalKoma = summary.normalKoma + summary.campKoma;
       Object.keys(summary.workMinutes).forEach((category) => {
         const minutes = summary.workMinutes[category];
         summary.workTotalMinutes += minutes;
@@ -2333,7 +2335,7 @@
         if (log.type === 'レッスン') {
           const lessonItems = getLogLessonItems(log);
           const count = lessonItems.length || Number(log.koma || 0);
-          const campCount = lessonItems.filter((item) => getLessonBillingCategoryClient(item) === 'キャンプ10時').length;
+          const campCount = lessonItems.filter((item) => getLessonBillingCategoryClient(item) === 'キャンプ').length;
           summary.lessonKoma += count;
           summary.campLessonKoma += campCount;
           summary.normalLessonKoma += Math.max(0, count - campCount);
@@ -2401,8 +2403,8 @@
         .map((item) => normalizeLessonContentClient(item))
         .filter(Boolean);
       if (values.length) return values.slice(0, expected);
-      const fallback = log.category === 'キャンプ10時'
-        ? 'キャンプ10時'
+      const fallback = log.category === 'キャンプ' || log.category === 'キャンプ10時'
+        ? 'キャンプ'
         : log.category === 'その他・要確認'
           ? 'その他・要確認'
           : 'CB';
@@ -2469,9 +2471,9 @@
     function getLocalLessonCategoryByItems(items) {
       const categories = items.map(getLessonBillingCategoryClient);
       if (categories.some((category) => category === 'その他・要確認')) return 'その他・要確認';
-      const hasCamp10 = categories.some((category) => category === 'キャンプ10時');
+      const hasCamp = categories.some((category) => category === 'キャンプ');
       const hasNormal = categories.some((category) => category === '通常コマ');
-      return hasCamp10 && !hasNormal ? 'キャンプ10時' : '通常コマ';
+      return hasCamp && !hasNormal ? 'キャンプ' : '通常コマ';
     }
 
     function normalizeQuickItemsClient(items) {
@@ -2542,6 +2544,10 @@
 
     function getSummaryConfirmCount(summary) {
       return Number(summary.unclassifiedCount || 0) + Number(summary.unfinishedCount || 0) + Number(summary.otherConfirmCount || 0);
+    }
+
+    function getSummaryCampKoma(summary) {
+      return Number(summary.campKoma || summary.camp10Koma || 0);
     }
 
     function clampKoma(value) {
