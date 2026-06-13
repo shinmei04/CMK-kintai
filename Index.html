@@ -16,8 +16,13 @@
       --success: #34c759;
       --focus: rgba(0, 122, 255, 0.22);
       --sheet-overlay: rgba(0, 0, 0, 0.36);
-      --radius: 12px;
-      --page-width: 720px;
+      --page-padding: 20px;
+      --row-padding: 16px;
+      --section-gap: 32px;
+      --row-height: 52px;
+      --label-width: 112px;
+      --radius: 10px;
+      --page-width: 680px;
       --nav-height: 64px;
     }
 
@@ -72,7 +77,7 @@
       min-height: 44px;
       min-width: 0;
       border: 1px solid transparent;
-      border-radius: 8px;
+      border-radius: 6px;
       background: transparent;
       color: var(--text-primary);
       font-size: 16px;
@@ -96,7 +101,7 @@
       max-width: var(--page-width);
       min-height: 100vh;
       margin: 0 auto;
-      padding: 20px 16px calc(var(--nav-height) + env(safe-area-inset-bottom) + 20px);
+      padding: 20px var(--page-padding) calc(var(--nav-height) + env(safe-area-inset-bottom) + 20px);
     }
 
     .desktop-nav {
@@ -106,12 +111,11 @@
     .test-mode {
       margin: 4px 0 18px;
       padding: 10px 12px;
-      border: 1px solid var(--separator);
       border-radius: var(--radius);
       background: var(--surface);
       color: var(--text-secondary);
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .page {
@@ -125,17 +129,17 @@
 
     .page-header {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       gap: 16px;
-      margin: 8px 0 22px;
+      margin: 8px 0 var(--section-gap);
     }
 
     .page-title {
       margin: 0;
       font-size: 31px;
       line-height: 1.1;
-      font-weight: 760;
+      font-weight: 700;
       letter-spacing: 0;
     }
 
@@ -144,34 +148,34 @@
       margin: 18px 0 0;
       color: var(--text-secondary);
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .month-picker {
-      width: 138px;
-      min-height: 36px;
-      padding: 0 4px;
+      width: 132px;
+      min-height: 34px;
+      padding: 0;
+      border: 0;
       text-align: right;
       color: var(--text-secondary);
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .section {
-      margin-top: 28px;
+      margin-top: var(--section-gap);
     }
 
     .section-title {
       margin: 0 0 8px;
       color: var(--text-secondary);
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: 0;
     }
 
     .group-list {
       overflow: hidden;
-      border: 1px solid var(--separator);
       border-radius: var(--radius);
       background: var(--surface);
     }
@@ -183,10 +187,10 @@
 
     .list-row {
       display: grid;
-      grid-template-columns: minmax(92px, 0.45fr) minmax(0, 1fr);
+      grid-template-columns: minmax(88px, var(--label-width)) minmax(0, 1fr);
       align-items: center;
-      min-height: 54px;
-      padding: 0 12px 0 14px;
+      min-height: var(--row-height);
+      padding: 0 var(--row-padding);
       border-bottom: 1px solid var(--separator);
       column-gap: 12px;
       background: var(--surface);
@@ -206,13 +210,14 @@
       min-width: 0;
       color: var(--text-primary);
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .list-value {
       min-width: 0;
       color: var(--text-primary);
       font-size: 16px;
+      font-variant-numeric: tabular-nums;
       text-align: right;
     }
 
@@ -220,12 +225,17 @@
       color: var(--text-secondary);
     }
 
+    #summaryGroup .list-row {
+      grid-template-columns: minmax(128px, 1fr) auto;
+    }
+
     .row-input,
     .row-select,
     .row-textarea {
       width: 100%;
       padding: 8px 0 8px 8px;
-      border-radius: 8px;
+      border: 0;
+      border-radius: 6px;
       text-align: right;
     }
 
@@ -250,7 +260,7 @@
       gap: 8px;
       color: var(--text-primary);
       font-size: 16px;
-      font-weight: 700;
+      font-weight: 500;
     }
 
     .status-dot {
@@ -269,7 +279,7 @@
       font-size: clamp(46px, 13vw, 62px);
       line-height: 1;
       font-variant-numeric: tabular-nums;
-      font-weight: 360;
+      font-weight: 400;
       letter-spacing: 0;
     }
 
@@ -277,7 +287,7 @@
       margin-top: 14px;
       color: var(--text-secondary);
       font-size: 20px;
-      font-weight: 500;
+      font-weight: 400;
       word-break: break-word;
     }
 
@@ -287,6 +297,31 @@
       font-size: 15px;
     }
 
+    .salary-summary {
+      margin: calc(var(--section-gap) * -0.35) 0 var(--section-gap);
+    }
+
+    .salary-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .salary-amount {
+      margin-top: 4px;
+      font-size: 38px;
+      line-height: 1.08;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .salary-note {
+      margin-top: 4px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 400;
+    }
+
     .primary-button,
     .secondary-button,
     .danger-text-button {
@@ -294,7 +329,7 @@
       min-height: 50px;
       border-radius: 10px;
       font-size: 17px;
-      font-weight: 700;
+      font-weight: 600;
     }
 
     .primary-button {
@@ -318,28 +353,58 @@
       padding: 0;
       color: var(--accent);
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 500;
       text-align: right;
     }
 
+    .quick-section {
+      border-bottom: 1px solid var(--separator);
+      background: var(--surface);
+    }
+
+    .quick-section:last-child {
+      border-bottom: 0;
+    }
+
+    .quick-header {
+      display: grid;
+      grid-template-columns: minmax(88px, var(--label-width)) minmax(0, 1fr);
+      align-items: center;
+      min-height: var(--row-height);
+      padding: 0 var(--row-padding);
+      column-gap: 12px;
+    }
+
     .quick-list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 8px;
-      min-width: 0;
-      padding: 8px 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border-top: 1px solid var(--separator);
+      background: var(--surface);
     }
 
     .quick-button {
-      min-height: 32px;
-      padding: 5px 10px;
-      border: 1px solid var(--separator);
-      border-radius: 8px;
-      background: var(--surface);
+      min-height: 46px;
+      padding: 0 8px;
+      border-right: 1px solid var(--separator);
+      border-bottom: 1px solid var(--separator);
+      border-radius: 0;
+      background: transparent;
       color: var(--accent);
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .quick-button:nth-child(2n) {
+      border-right: 0;
+    }
+
+    .quick-button:nth-last-child(-n + 2) {
+      border-bottom: 0;
+    }
+
+    .quick-button:active {
+      background: rgba(0, 122, 255, 0.08);
     }
 
     .history-day {
@@ -350,16 +415,16 @@
       margin: 0 0 8px;
       font-size: 18px;
       line-height: 1.25;
-      font-weight: 750;
+      font-weight: 600;
     }
 
     .history-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto 16px;
+      grid-template-columns: minmax(0, 1fr) minmax(64px, auto) 16px;
       align-items: center;
       width: 100%;
       min-height: 68px;
-      padding: 10px 12px 10px 14px;
+      padding: 10px var(--row-padding);
       border-bottom: 1px solid var(--separator);
       background: var(--surface);
       color: var(--text-primary);
@@ -374,14 +439,14 @@
     .history-kind {
       color: var(--text-primary);
       font-size: 15px;
-      font-weight: 650;
+      font-weight: 500;
     }
 
     .history-main {
       margin-top: 2px;
       color: var(--text-primary);
       font-size: 15px;
-      font-weight: 500;
+      font-weight: 400;
       word-break: break-word;
     }
 
@@ -395,7 +460,9 @@
     .history-value {
       color: var(--text-primary);
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 400;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
       white-space: nowrap;
     }
 
@@ -408,27 +475,26 @@
 
     .warning-list {
       display: grid;
-      gap: 8px;
-      margin-top: 12px;
+      gap: 6px;
+      margin-top: 16px;
     }
 
     .warning-item {
-      padding: 10px 12px;
-      border: 1px solid rgba(255, 59, 48, 0.22);
-      border-radius: 10px;
-      background: #fff;
+      padding: 0;
+      background: transparent;
       color: var(--danger);
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .copy-area {
       width: 100%;
       min-height: 160px;
       margin-top: 16px;
-      padding: 12px;
-      border: 1px solid var(--separator);
-      border-radius: var(--radius);
+      padding: 12px 0;
+      border: 0;
+      border-top: 1px solid var(--separator);
+      border-radius: 0;
       background: var(--surface);
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 14px;
@@ -459,7 +525,7 @@
       min-height: 50px;
       color: var(--text-secondary);
       font-size: 11px;
-      font-weight: 650;
+      font-weight: 500;
     }
 
     .tab-button.active {
@@ -508,7 +574,7 @@
       width: 100%;
       max-height: min(88vh, 760px);
       overflow: auto;
-      padding: 8px 12px calc(18px + env(safe-area-inset-bottom));
+      padding: 8px var(--page-padding) calc(18px + env(safe-area-inset-bottom));
       border-radius: 16px 16px 0 0;
       background: var(--background);
       transform: translateY(0);
@@ -535,7 +601,7 @@
       margin: 0;
       overflow: hidden;
       font-size: 16px;
-      font-weight: 750;
+      font-weight: 600;
       text-align: center;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -545,7 +611,7 @@
       min-height: 44px;
       color: var(--accent);
       font-size: 16px;
-      font-weight: 650;
+      font-weight: 500;
     }
 
     .sheet-action:first-child {
@@ -561,14 +627,14 @@
       margin: 0 4px 8px;
       color: var(--danger);
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .sheet-saving {
       margin: 0 4px 8px;
       color: var(--text-secondary);
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .edit-section {
@@ -612,7 +678,7 @@
     .dialog-title {
       margin: 0;
       font-size: 20px;
-      font-weight: 750;
+      font-weight: 600;
     }
 
     .icon-button {
@@ -642,7 +708,7 @@
       background: rgba(28, 28, 30, 0.94);
       color: #fff;
       font-size: 14px;
-      font-weight: 650;
+      font-weight: 500;
       text-align: center;
     }
 
@@ -657,7 +723,7 @@
     @media (min-width: 760px) {
       .app-shell {
         max-width: var(--page-width);
-        padding: 28px 22px 48px;
+        padding: 28px var(--page-padding) 48px;
       }
 
       .desktop-nav {
@@ -668,7 +734,6 @@
         justify-content: center;
         margin: 0 0 28px;
         padding: 8px;
-        border: 1px solid var(--separator);
         border-radius: 12px;
         background: var(--surface);
       }
@@ -714,7 +779,7 @@
         width: min(100%, 540px);
         max-height: min(86vh, 760px);
         border-radius: 16px;
-        padding: 8px 12px 18px;
+        padding: 8px var(--page-padding) 18px;
       }
 
       .toast {
@@ -723,18 +788,21 @@
     }
 
     @media (max-width: 420px) {
-      .app-shell {
-        padding-right: 12px;
-        padding-left: 12px;
-      }
-
-      .list-row {
-        grid-template-columns: minmax(82px, 0.42fr) minmax(0, 1fr);
+      :root {
+        --label-width: 100px;
       }
 
       .history-row {
         grid-template-columns: minmax(0, 1fr) auto 14px;
         column-gap: 8px;
+      }
+    }
+
+    @media (max-width: 340px) {
+      :root {
+        --page-padding: 16px;
+        --row-padding: 14px;
+        --label-width: 88px;
       }
     }
 
@@ -758,11 +826,11 @@
 <body>
   <div class="app-shell">
     <nav class="desktop-nav" aria-label="画面切り替え">
-      <button class="tab-button active" type="button" data-tab="today" aria-label="今日を表示">
+      <button class="tab-button active" type="button" data-tab="today" aria-label="勤怠を表示">
         <span class="tab-icon" aria-hidden="true">
           <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16M8 14h4"></path></svg>
         </span>
-        <span>今日</span>
+        <span>勤怠</span>
       </button>
       <button class="tab-button" type="button" data-tab="history" aria-label="履歴を表示">
         <span class="tab-icon" aria-hidden="true">
@@ -804,10 +872,6 @@
               </select>
             </label>
             <div id="lessonItems"></div>
-            <label class="list-row tall" for="lessonNote">
-              <span class="list-label">メモ</span>
-              <textarea id="lessonNote" class="row-textarea" aria-label="講師業務のメモ" placeholder="なし"></textarea>
-            </label>
           </div>
           <button id="saveLessonButton" class="primary-button" type="button">講師業務を登録</button>
         </section>
@@ -837,6 +901,12 @@
           </label>
         </header>
 
+        <section class="salary-summary" aria-labelledby="salaryTitle">
+          <div id="salaryTitle" class="salary-label">給与見込み</div>
+          <div id="salaryAmount" class="salary-amount">--</div>
+          <div class="salary-note">登録内容をもとにした概算です</div>
+        </section>
+
         <div id="summaryGroup" class="group-list"></div>
         <div id="summaryWarnings" class="warning-list"></div>
         <button id="copyTextButton" class="primary-button" type="button" disabled>コピー用テキストを作成</button>
@@ -846,11 +916,11 @@
   </div>
 
   <nav class="tab-bar" aria-label="画面切り替え">
-    <button class="tab-button active" type="button" data-tab="today" aria-label="今日を表示">
+    <button class="tab-button active" type="button" data-tab="today" aria-label="勤怠を表示">
       <span class="tab-icon" aria-hidden="true">
         <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16M8 14h4"></path></svg>
       </span>
-      <span>今日</span>
+      <span>勤怠</span>
     </button>
     <button class="tab-button" type="button" data-tab="history" aria-label="履歴を表示">
       <span class="tab-icon" aria-hidden="true">
@@ -886,7 +956,7 @@
   <dialog id="quickItemsDialog">
     <div class="dialog-body">
       <div class="dialog-header">
-        <h2 class="dialog-title">よく使う内容を編集</h2>
+        <h2 class="dialog-title">クイック入力を編集</h2>
         <button id="closeQuickItemsButton" class="icon-button" type="button" aria-label="閉じる">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
         </button>
@@ -933,9 +1003,11 @@
     };
     const LOCAL_STORAGE_KEY = 'kintai_logs_pc_test_v1';
     const LOCAL_QUICK_ITEMS_KEY = 'kintai_work_quick_items_v1';
-    const DEFAULT_WORK_QUICK_ITEMS = ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務', 'UL面談', '模擬レッスン'];
+    const DEFAULT_WORK_QUICK_ITEMS = ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務'];
     const WORK_CATEGORIES = ['教材開発', 'SNS', '研修', 'その他MTGなど'];
     const LESSON_CATEGORIES = ['通常コマ', 'キャンプ10時', 'その他・要確認'];
+    const LESSON_PAY_PER_KOMA = 2200;
+    const WORK_HOURLY_PAY = 1300;
 
     const state = {
       currentTab: 'today',
@@ -988,7 +1060,7 @@
         state.currentMonth = data.currentMonth;
         state.lessonItemOptions = data.lessonContentOptions || data.lessonItemOptions || LESSON_CONTENT_OPTIONS.slice();
         state.workCategories = data.workCategories || WORK_CATEGORIES.slice();
-        state.workQuickItems = data.workQuickItems || DEFAULT_WORK_QUICK_ITEMS.slice();
+        state.workQuickItems = normalizeQuickItemsClient(data.workQuickItems || DEFAULT_WORK_QUICK_ITEMS);
         state.activeWork = data.activeWork || null;
 
         $('todayLabel').textContent = addWeekdayToDisplay(data.todayIso, data.todayDisplay);
@@ -1011,7 +1083,7 @@
       const data = await gas('getInitialData');
       state.todayIso = data.todayIso;
       state.currentMonth = data.currentMonth;
-      state.workQuickItems = data.workQuickItems || state.workQuickItems;
+      state.workQuickItems = normalizeQuickItemsClient(data.workQuickItems || state.workQuickItems);
       state.activeWork = data.activeWork || null;
       $('todayLabel').textContent = addWeekdayToDisplay(data.todayIso, data.todayDisplay);
       renderToday();
@@ -1106,21 +1178,18 @@
     }
 
     function createQuickItemsRow() {
-      const row = createEl('div', { className: 'list-row tall' });
-      row.append(
-        createEl('span', { className: 'list-label' }, 'よく使う内容'),
-        createEl('div', { className: 'quick-list', id: 'startWorkQuickButtons' }, [
-          createEl('button', { className: 'small-link-button', type: 'button', id: 'editQuickItemsButton' }, '編集'),
-        ])
-      );
-      row.querySelector('#editQuickItemsButton').addEventListener('click', openQuickItemsDialog);
-      return row;
+      const section = createEl('div', { className: 'quick-section' });
+      const header = createEl('div', { className: 'quick-header' });
+      const editButton = createEl('button', { className: 'small-link-button', type: 'button', id: 'editQuickItemsButton' }, '編集');
+      editButton.addEventListener('click', openQuickItemsDialog);
+      header.append(createEl('span', { className: 'list-label' }, 'クイック入力'), editButton);
+      section.append(header, createEl('div', { className: 'quick-list', id: 'startWorkQuickButtons' }));
+      return section;
     }
 
     function renderQuickButtons() {
       const container = $('startWorkQuickButtons');
       if (!container) return;
-      const editButton = $('editQuickItemsButton');
       clear(container);
       state.workQuickItems.forEach((item) => {
         const button = createEl('button', { className: 'quick-button', type: 'button' }, item);
@@ -1133,7 +1202,6 @@
         });
         container.appendChild(button);
       });
-      container.appendChild(editButton);
     }
 
     function renderLessonItemRows() {
@@ -1219,14 +1287,13 @@
         koma,
         lessonItems,
         content: lessonItems.join(' / '),
-        note: $('lessonNote').value,
+        note: '',
       };
 
       try {
         setBusy(true);
         const result = await gas('saveLesson', payload);
         $('lessonKoma').value = '1';
-        $('lessonNote').value = '';
         renderLessonItemRows();
         await refreshAfterMutation(result.message || '講師業務を登録しました');
       } catch (error) {
@@ -1346,11 +1413,16 @@
     function renderSummary(summary) {
       const group = $('summaryGroup');
       clear(group);
+      const salary = summary.salarySummary || buildLocalSalarySummary(summary.month);
+      $('salaryAmount').textContent = salary ? formatYen(salary.totalPay) : '--';
       group.append(
         createSummaryRow('通常コマ', `${summary.normalKoma || 0}`),
         createSummaryRow('キャンプ', `${summary.camp10Koma || 0}`),
         createSummaryRow('講師外業務時間', formatHoursLabel(summary.workTotalHours)),
-        createSummaryRow('要確認件数', `${getSummaryConfirmCount(summary)}件`)
+        createSummaryRow('要確認件数', `${getSummaryConfirmCount(summary)}件`),
+        createSummaryRow('レッスン分', formatYen(salary ? salary.lessonPay : 0)),
+        createSummaryRow('講師外業務分', formatYen(salary ? salary.workPay : 0)),
+        createSummaryRow('給与見込み合計', formatYen(salary ? salary.totalPay : 0))
       );
 
       const warnings = $('summaryWarnings');
@@ -1663,7 +1735,7 @@
     function openQuickItemsDialog() {
       const container = $('quickItemInputs');
       clear(container);
-      for (let index = 0; index < 6; index += 1) {
+      for (let index = 0; index < 4; index += 1) {
         const id = `quickItem${index}`;
         const row = createEl('label', { className: 'list-row', htmlFor: id });
         const input = createEl('input', {
@@ -1673,7 +1745,7 @@
           maxLength: '40',
           value: state.workQuickItems[index] || '',
           placeholder: '例：ULMTG',
-          ariaLabel: `${index + 1}個目のよく使う内容`,
+          ariaLabel: `${index + 1}個目のクイック入力`,
         });
         row.append(createEl('span', { className: 'list-label' }, `${index + 1}個目`), input);
         container.appendChild(row);
@@ -1706,7 +1778,7 @@
         state.workQuickItems = result.workQuickItems || items;
         closeQuickItemsDialog();
         renderToday();
-        showToast(result.message || 'よく使う内容を保存しました');
+        showToast(result.message || 'クイック入力を保存しました');
       } catch (error) {
         showError(error);
       } finally {
@@ -1750,6 +1822,7 @@
           workQuickItems: localReadQuickItems(),
           activeWork: localFindActiveWork(),
           recentLogs: localGetRecentLogs(),
+          salarySummary: buildLocalSalarySummary(toMonthValue(today)),
         };
       },
 
@@ -1758,7 +1831,7 @@
         localStorage.setItem(LOCAL_QUICK_ITEMS_KEY, JSON.stringify(normalized));
         return {
           ok: true,
-          message: 'よく使う内容を保存しました（PCテスト）',
+          message: 'クイック入力を保存しました（PCテスト）',
           workQuickItems: normalized,
         };
       },
@@ -1935,6 +2008,7 @@
         message,
         activeWork: localFindActiveWork(),
         recentLogs: localGetRecentLogs(),
+        salarySummary: buildLocalSalarySummary(toMonthValue(new Date())),
       };
     }
 
@@ -2079,9 +2153,42 @@
         summary.workHours[category] = roundHoursClient(minutes).toFixed(2);
       });
       summary.workTotalHours = roundHoursClient(summary.workTotalMinutes).toFixed(2);
+      summary.salarySummary = buildLocalSalarySummary(month);
       if (summary.otherConfirmCount > 0) summary.warnings.push('その他・要確認のレッスンがあります。内容を確認してください。');
       if (summary.unfinishedCount > 0) summary.warnings.push('終了漏れの講師外業務があります。勤怠ログを確認してください。');
       if (summary.unclassifiedCount > 0) summary.warnings.push('未分類のログがあります。分類を確認してください。');
+      return summary;
+    }
+
+    function buildLocalSalarySummary(month) {
+      validateMonth(month);
+      const summary = {
+        month,
+        monthLabel: `${Number(month.slice(0, 4))}年${Number(month.slice(5, 7))}月`,
+        lessonKoma: 0,
+        workMinutes: 0,
+        workHours: '0.00',
+        lessonPay: 0,
+        workPay: 0,
+        totalPay: 0,
+        lessonPayPerKoma: LESSON_PAY_PER_KOMA,
+        workHourlyPay: WORK_HOURLY_PAY,
+      };
+
+      localReadLogs().filter((log) => log.month === month).forEach((log) => {
+        if (log.type === 'レッスン') {
+          summary.lessonKoma += Number(log.koma || 0);
+          return;
+        }
+        if (log.type === '講師外業務' && log.end) {
+          summary.workMinutes += getLogMinutes(log);
+        }
+      });
+
+      summary.workHours = roundHoursClient(summary.workMinutes).toFixed(2);
+      summary.lessonPay = summary.lessonKoma * LESSON_PAY_PER_KOMA;
+      summary.workPay = Math.round(Number(summary.workHours) * WORK_HOURLY_PAY);
+      summary.totalPay = summary.lessonPay + summary.workPay;
       return summary;
     }
 
@@ -2215,7 +2322,7 @@
           seen.add(item);
           return true;
         })
-        .slice(0, 6);
+        .slice(0, 4);
     }
 
     function normalizeTimeTextClient(value) {
@@ -2246,6 +2353,10 @@
     function formatHoursLabel(hours) {
       const minutes = Math.round(Number(hours || 0) * 60);
       return formatDuration(minutes);
+    }
+
+    function formatYen(value) {
+      return `¥${Number(value || 0).toLocaleString('ja-JP')}`;
     }
 
     function formatDateHeading(dateIso, fallback) {

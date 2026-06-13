@@ -75,8 +75,10 @@ const APP_CONFIG = {
   lessonContentAliases: COURSE_CONFIG.lessonContentAliases,
   workCategories: ['教材開発', 'SNS', '研修', 'その他MTGなど'],
   workQuickItemsPropertyKey: 'workQuickItems',
-  defaultWorkQuickItems: ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務', 'UL面談', '模擬レッスン'],
-  maxWorkQuickItems: 6,
+  defaultWorkQuickItems: ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務'],
+  maxWorkQuickItems: 4,
+  lessonPayPerKoma: 2200,
+  workHourlyPay: 1300,
 };
 
 const COL = {
@@ -142,6 +144,7 @@ function getInitialData() {
     workQuickItems: getWorkQuickItems_(),
     activeWork: findActiveWork_(),
     recentLogs: getRecentLogs_(5),
+    salarySummary: buildSalarySummary_(formatDate_(now, 'yyyy-MM')),
   };
 }
 
@@ -153,7 +156,7 @@ function saveWorkQuickItems(items) {
   );
   return {
     ok: true,
-    message: 'よく使う内容を保存しました',
+    message: 'クイック入力を保存しました',
     workQuickItems: normalized,
   };
 }
@@ -199,6 +202,7 @@ function saveLesson(payload) {
       message: 'レッスンを保存しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
     };
   });
 }
@@ -246,6 +250,7 @@ function startWork(payload) {
       message: '出勤しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
     };
   });
 }
@@ -308,6 +313,7 @@ function finishWork(payload) {
       message: '退勤しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
     };
   });
 }
@@ -326,6 +332,7 @@ function cancelActiveWork() {
       message: '出勤を取り消しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
     };
   });
 }
@@ -343,6 +350,7 @@ function deleteLog(id) {
       message: 'ログを削除しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
     };
   });
 }
@@ -443,6 +451,7 @@ function updateLog(payload) {
       message: 'ログを更新しました',
       activeWork: findActiveWork_(),
       recentLogs: getRecentLogs_(5),
+      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
     };
   });
 }
@@ -488,7 +497,56 @@ function getMonthlySummary(month) {
   });
 
   finalizeSummary_(summary);
+  summary.salarySummary = buildSalarySummary_(target.monthValue);
   writeMonthlySummary_(summary);
+  return summary;
+}
+
+function buildSalarySummary_(month) {
+  const target = parseMonth_(month);
+  const summary = {
+    month: target.monthValue,
+    monthLabel: target.monthLabel,
+    lessonKoma: 0,
+    workMinutes: 0,
+    workHours: '0.00',
+    lessonPay: 0,
+    workPay: 0,
+    totalPay: 0,
+    lessonPayPerKoma: APP_CONFIG.lessonPayPerKoma,
+    workHourlyPay: APP_CONFIG.workHourlyPay,
+  };
+
+  readLogObjects_().forEach(function (log) {
+    if (log.month !== target.monthValue) {
+      return;
+    }
+
+    if (log.type === APP_CONFIG.lessonType) {
+      summary.lessonKoma += Number(log.koma || 0);
+      return;
+    }
+
+    if (log.type === APP_CONFIG.workType && log.end) {
+      let minutes = Number(log.minutes || 0);
+      if (!minutes && log.start && log.end) {
+        const startAt = buildDateTime_(log.dateIso, log.start);
+        const endAt = buildDateTime_(log.dateIso, log.end);
+        if (startAt && endAt) {
+          if (endAt.getTime() < startAt.getTime()) {
+            endAt.setDate(endAt.getDate() + 1);
+          }
+          minutes = Math.round((endAt.getTime() - startAt.getTime()) / 60000);
+        }
+      }
+      summary.workMinutes += minutes;
+    }
+  });
+
+  summary.workHours = roundHours_(summary.workMinutes).toFixed(2);
+  summary.lessonPay = summary.lessonKoma * APP_CONFIG.lessonPayPerKoma;
+  summary.workPay = Math.round(Number(summary.workHours) * APP_CONFIG.workHourlyPay);
+  summary.totalPay = summary.lessonPay + summary.workPay;
   return summary;
 }
 
@@ -526,7 +584,7 @@ function getWorkQuickItems_() {
 
 function normalizeWorkQuickItems_(items) {
   if (!Array.isArray(items)) {
-    throw new Error('よく使う内容の形式が正しくありません');
+    throw new Error('クイック入力の形式が正しくありません');
   }
 
   const seen = {};
@@ -540,11 +598,7 @@ function normalizeWorkQuickItems_(items) {
     normalized.push(text.slice(0, 40));
   });
 
-  if (normalized.length > APP_CONFIG.maxWorkQuickItems) {
-    throw new Error('よく使う内容は最大' + APP_CONFIG.maxWorkQuickItems + '個までです');
-  }
-
-  return normalized;
+  return normalized.slice(0, APP_CONFIG.maxWorkQuickItems);
 }
 
 function normalizeLessonItems_(items) {
@@ -910,6 +964,12 @@ function writeMonthlySummary_(summary) {
     ['未分類件数', summary.unclassifiedCount],
     ['終了漏れ件数', summary.unfinishedCount],
   ];
+
+  if (summary.salarySummary) {
+    rows.push(['レッスン分給与', summary.salarySummary.lessonPay]);
+    rows.push(['講師外業務分給与', summary.salarySummary.workPay]);
+    rows.push(['給与見込み合計', summary.salarySummary.totalPay]);
+  }
 
   if (summary.confirmNotes.length > 0) {
     rows.push([]);
