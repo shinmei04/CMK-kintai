@@ -180,6 +180,24 @@
       background: var(--surface);
     }
 
+    .outside-card-label {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      min-height: 22px;
+      margin: 0 0 6px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .outside-card-label h2 {
+      margin: 0;
+      color: inherit;
+      font: inherit;
+    }
+
     .group-list + .primary-button,
     .group-list + .secondary-button {
       margin-top: 16px;
@@ -197,6 +215,10 @@
     }
 
     .list-row:last-child {
+      border-bottom: 0;
+    }
+
+    .list-row.no-separator {
       border-bottom: 0;
     }
 
@@ -223,6 +245,25 @@
 
     .list-value.muted {
       color: var(--text-secondary);
+    }
+
+    .work-content-trigger {
+      width: 100%;
+      text-align: left;
+    }
+
+    .work-content-trigger .list-value {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .work-content-trigger .icon {
+      width: 14px;
+      height: 14px;
+      color: var(--text-secondary);
+      flex: 0 0 auto;
     }
 
     #summaryGroup .list-row {
@@ -358,53 +399,69 @@
     }
 
     .quick-section {
-      border-bottom: 1px solid var(--separator);
-      background: var(--surface);
-    }
-
-    .quick-section:last-child {
-      border-bottom: 0;
+      background: transparent;
+      padding: 6px 0 4px;
     }
 
     .quick-header {
-      display: grid;
-      grid-template-columns: minmax(88px, var(--label-width)) minmax(0, 1fr);
+      display: flex;
       align-items: center;
-      min-height: var(--row-height);
-      padding: 0 var(--row-padding);
-      column-gap: 12px;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 34px;
+      padding: 2px var(--row-padding) 0;
+    }
+
+    .quick-header .list-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
     }
 
     .quick-list {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      border-top: 1px solid var(--separator);
-      background: var(--surface);
+      display: flex;
+      flex-wrap: wrap;
+      column-gap: 18px;
+      row-gap: 0;
+      padding: 0 var(--row-padding) 10px;
     }
 
     .quick-button {
-      min-height: 46px;
-      padding: 0 8px;
-      border-right: 1px solid var(--separator);
-      border-bottom: 1px solid var(--separator);
+      min-height: 44px;
+      padding: 0;
       border-radius: 0;
       background: transparent;
       color: var(--accent);
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
       text-align: center;
-    }
-
-    .quick-button:nth-child(2n) {
-      border-right: 0;
-    }
-
-    .quick-button:nth-last-child(-n + 2) {
-      border-bottom: 0;
+      white-space: nowrap;
     }
 
     .quick-button:active {
-      background: rgba(0, 122, 255, 0.08);
+      color: #005ecb;
+    }
+
+    .dialog-field {
+      margin-top: 18px;
+    }
+
+    .dialog-field-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .dialog-textarea {
+      width: 100%;
+      min-height: 96px;
+      padding: 12px;
+      border: 0;
+      border-radius: var(--radius);
+      background: var(--background);
+      text-align: left;
     }
 
     .history-day {
@@ -802,7 +859,7 @@
       :root {
         --page-padding: 16px;
         --row-padding: 14px;
-        --label-width: 88px;
+        --label-width: 96px;
       }
     }
 
@@ -860,7 +917,9 @@
         <div id="workStatusArea" class="status-block"></div>
 
         <section class="section" aria-labelledby="lessonTitle">
-          <h2 id="lessonTitle" class="section-title">レッスン</h2>
+          <div class="outside-card-label">
+            <h2 id="lessonTitle">レッスン</h2>
+          </div>
           <div id="lessonGroup" class="group-list">
             <label class="list-row" for="lessonKoma">
               <span class="list-label">コマ数</span>
@@ -953,6 +1012,29 @@
     </section>
   </div>
 
+  <dialog id="workContentDialog">
+    <div class="dialog-body">
+      <div class="dialog-header">
+        <h2 class="dialog-title">出勤時の内容</h2>
+        <button id="closeWorkContentButton" class="icon-button" type="button" aria-label="閉じる">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+      <div class="quick-section">
+        <div class="quick-header">
+          <span class="list-label">クイック入力</span>
+          <button id="editQuickItemsFromContentButton" class="small-link-button" type="button">編集</button>
+        </div>
+        <div id="workContentQuickButtons" class="quick-list"></div>
+      </div>
+      <div class="dialog-field">
+        <label class="dialog-field-label" for="workContentDraft">自由入力</label>
+        <textarea id="workContentDraft" class="dialog-textarea" aria-label="出勤時の内容を自由入力" placeholder="例：ULMTG"></textarea>
+      </div>
+      <button id="applyWorkContentButton" class="primary-button" type="button">決定</button>
+    </div>
+  </dialog>
+
   <dialog id="quickItemsDialog">
     <div class="dialog-body">
       <div class="dialog-header">
@@ -1022,6 +1104,7 @@
       editingLog: null,
       editSaving: false,
       editDeleting: false,
+      startWorkContent: '',
       timerId: null,
       busy: false,
     };
@@ -1048,6 +1131,9 @@
           closeEditSheet();
         }
       });
+      $('closeWorkContentButton').addEventListener('click', closeWorkContentDialog);
+      $('applyWorkContentButton').addEventListener('click', applyWorkContentDialog);
+      $('editQuickItemsFromContentButton').addEventListener('click', openQuickItemsDialog);
       $('closeQuickItemsButton').addEventListener('click', closeQuickItemsDialog);
       $('saveQuickItemsButton').addEventListener('click', saveQuickItems);
     }
@@ -1143,18 +1229,34 @@
         createEl('span', { className: 'status-dot', ariaHidden: 'true' }),
         '勤務していません',
       ]);
-      const group = createEl('div', { className: 'group-list', style: 'margin-top: 16px;' });
+      const group = createEl('div', { className: 'group-list' });
+      const categoryRow = createSelectRow('startWorkCategory', '分類', state.workCategories, 'その他MTGなど');
       group.append(
-        createInputRow('startWorkContent', '出勤時の内容', 'textarea', '例：ULMTG'),
-        createSelectRow('startWorkCategory', '分類', state.workCategories, 'その他MTGなど'),
-        createInputRow('startWorkNote', 'メモ', 'textarea', 'なし'),
-        createQuickItemsRow()
+        createWorkContentPickerRow(),
+        categoryRow
       );
+      const outsideLabel = createEl('div', { className: 'outside-card-label', style: 'margin-top: 14px;' }, '講師外業務');
 
       const startButton = createEl('button', { className: 'primary-button', type: 'button', id: 'startWorkButton' }, '出勤する');
       startButton.addEventListener('click', confirmStartWork);
-      area.append(status, group, startButton);
-      renderQuickButtons();
+      area.append(status, outsideLabel, group, startButton);
+      updateWorkContentDisplay();
+    }
+
+    function createWorkContentPickerRow() {
+      const button = createEl('button', {
+        className: 'list-row work-content-trigger',
+        type: 'button',
+        id: 'startWorkContentPicker',
+        ariaLabel: '出勤時の内容を選択または入力',
+      });
+      const value = createEl('span', { className: 'list-value muted', id: 'startWorkContentValue' }, [
+        createEl('span', { id: 'startWorkContentText' }, '選択または入力'),
+        chevronIcon(),
+      ]);
+      button.append(createEl('span', { className: 'list-label' }, '出勤時の内容'), value);
+      button.addEventListener('click', openWorkContentDialog);
+      return button;
     }
 
     function createInputRow(id, labelText, inputType, placeholder) {
@@ -1177,31 +1279,62 @@
       return label;
     }
 
-    function createQuickItemsRow() {
-      const section = createEl('div', { className: 'quick-section' });
-      const header = createEl('div', { className: 'quick-header' });
-      const editButton = createEl('button', { className: 'small-link-button', type: 'button', id: 'editQuickItemsButton' }, '編集');
-      editButton.addEventListener('click', openQuickItemsDialog);
-      header.append(createEl('span', { className: 'list-label' }, 'クイック入力'), editButton);
-      section.append(header, createEl('div', { className: 'quick-list', id: 'startWorkQuickButtons' }));
-      return section;
-    }
-
-    function renderQuickButtons() {
-      const container = $('startWorkQuickButtons');
+    function renderWorkContentQuickButtons() {
+      const container = $('workContentQuickButtons');
       if (!container) return;
       clear(container);
       state.workQuickItems.forEach((item) => {
         const button = createEl('button', { className: 'quick-button', type: 'button' }, item);
         button.addEventListener('click', () => {
-          const input = $('startWorkContent');
-          if (input) {
-            input.value = item;
-            input.focus();
-          }
+          setStartWorkContent(item);
+          closeWorkContentDialog();
         });
         container.appendChild(button);
       });
+    }
+
+    function openWorkContentDialog() {
+      renderWorkContentQuickButtons();
+      $('workContentDraft').value = state.startWorkContent || '';
+      const dialog = $('workContentDialog');
+      if (dialog.showModal) {
+        dialog.showModal();
+      } else {
+        dialog.setAttribute('open', 'open');
+      }
+      $('workContentDraft').focus();
+    }
+
+    function closeWorkContentDialog() {
+      const dialog = $('workContentDialog');
+      if (dialog.close) {
+        dialog.close();
+      } else {
+        dialog.removeAttribute('open');
+      }
+    }
+
+    function applyWorkContentDialog() {
+      setStartWorkContent($('workContentDraft').value);
+      closeWorkContentDialog();
+    }
+
+    function setStartWorkContent(value) {
+      state.startWorkContent = String(value || '').trim();
+      updateWorkContentDisplay();
+    }
+
+    function updateWorkContentDisplay() {
+      const text = $('startWorkContentText');
+      const value = $('startWorkContentValue');
+      if (!text || !value) return;
+      if (state.startWorkContent) {
+        text.textContent = state.startWorkContent;
+        value.classList.remove('muted');
+      } else {
+        text.textContent = '選択または入力';
+        value.classList.add('muted');
+      }
     }
 
     function renderLessonItemRows() {
@@ -1224,7 +1357,7 @@
 
     async function confirmStartWork() {
       if (state.busy) return;
-      const content = $('startWorkContent') ? $('startWorkContent').value.trim() : '';
+      const content = state.startWorkContent.trim();
       if (!content) {
         showToast('出勤時の内容を入力してください', true);
         return;
@@ -1232,11 +1365,12 @@
       const payload = {
         content,
         category: $('startWorkCategory').value,
-        note: $('startWorkNote').value,
+        note: '',
       };
       try {
         setBusy(true);
         const result = await gas('startWork', payload);
+        state.startWorkContent = '';
         await refreshAfterMutation(result.message || '出勤しました');
       } catch (error) {
         showError(error);
@@ -1417,12 +1551,9 @@
       $('salaryAmount').textContent = salary ? formatYen(salary.totalPay) : '--';
       group.append(
         createSummaryRow('通常コマ', `${summary.normalKoma || 0}`),
+        createSummaryRow('講師外業務', formatDecimalHours(summary.workTotalHours)),
         createSummaryRow('キャンプ', `${summary.camp10Koma || 0}`),
-        createSummaryRow('講師外業務時間', formatHoursLabel(summary.workTotalHours)),
-        createSummaryRow('要確認件数', `${getSummaryConfirmCount(summary)}件`),
-        createSummaryRow('レッスン分', formatYen(salary ? salary.lessonPay : 0)),
-        createSummaryRow('講師外業務分', formatYen(salary ? salary.workPay : 0)),
-        createSummaryRow('給与見込み合計', formatYen(salary ? salary.totalPay : 0))
+        createSummaryRow('要確認件数', `${getSummaryConfirmCount(summary)}`)
       );
 
       const warnings = $('summaryWarnings');
@@ -1461,9 +1592,27 @@
       const details = summary.details && summary.details.length
         ? summary.details.map((detail) => `${detail.shortDate} ${detail.start}-${detail.end} ${detail.content}`)
         : ['（なし）'];
+      const notes = summary.confirmNotes && summary.confirmNotes.length
+        ? ['', '要確認メモ', ...summary.confirmNotes]
+        : [];
       return [
+        `対象月：${summary.monthLabel}`,
+        '',
+        'レッスン',
+        `通常コマ数：${summary.normalKoma}`,
+        `キャンプ10時コマ数：${summary.camp10Koma}`,
+        `レッスン合計コマ数：${summary.lessonTotalKoma}`,
+        '',
+        '講師外業務',
+        `教材開発：${summary.workHours['教材開発']}`,
+        `SNS：${summary.workHours.SNS}`,
+        `研修：${summary.workHours['研修']}`,
+        `その他MTGなど：${summary.workHours['その他MTGなど']}`,
+        `講師外業務合計：${summary.workTotalHours}`,
+        '',
         '講師外業務詳細',
         ...details,
+        ...notes,
       ].join('\n');
     }
 
@@ -1778,6 +1927,7 @@
         state.workQuickItems = result.workQuickItems || items;
         closeQuickItemsDialog();
         renderToday();
+        renderWorkContentQuickButtons();
         showToast(result.message || 'クイック入力を保存しました');
       } catch (error) {
         showError(error);
@@ -2353,6 +2503,10 @@
     function formatHoursLabel(hours) {
       const minutes = Math.round(Number(hours || 0) * 60);
       return formatDuration(minutes);
+    }
+
+    function formatDecimalHours(hours) {
+      return Number(hours || 0).toFixed(2);
     }
 
     function formatYen(value) {
