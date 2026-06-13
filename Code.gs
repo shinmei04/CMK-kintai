@@ -350,6 +350,7 @@ function deleteLog(id) {
 function updateLog(payload) {
   return withLock_(function () {
     setup();
+    payload = payload || {};
     const found = findRowById_(payload.id);
     if (!found) {
       throw new Error('編集対象のログが見つかりません');
@@ -368,17 +369,25 @@ function updateLog(payload) {
     const row = found.rowNumber;
 
     if (type === APP_CONFIG.lessonType) {
-      const category = assertInList_(payload.category, APP_CONFIG.lessonCategories, 'レッスン分類');
       const koma = Number(payload.koma);
-      if (!koma || koma < 1 || koma > 5) {
-        throw new Error('コマ数は1から5の範囲で選んでください');
+      if (!koma || koma < 1 || koma > 4) {
+        throw new Error('コマ数は1から4の範囲で選んでください');
       }
+
+      const lessonItems = Array.isArray(payload.lessonItems)
+        ? normalizeLessonItems_(payload.lessonItems)
+        : normalizeLessonItems_(String(content || '').split('/'));
+      if (lessonItems.length !== koma) {
+        throw new Error('コマ数とコマ内容の数が一致していません');
+      }
+      const lessonContent = lessonItems.join(' / ');
+      const category = getLessonCategoryByItems_(lessonItems);
 
       sheet.getRange(row, COL.date, 1, 9).setValues([[
         date,
         '',
         '',
-        content,
+        lessonContent,
         category,
         koma,
         '',
@@ -401,8 +410,11 @@ function updateLog(payload) {
       if (end) {
         const startAt = buildDateTime_(date, start);
         const endAt = buildDateTime_(date, end);
+        if (!startAt || !endAt) {
+          throw new Error('勤務時間を計算できませんでした');
+        }
         if (endAt.getTime() < startAt.getTime()) {
-          throw new Error('編集画面では日付をまたぐ時間は計算できません 必要な場合はシートで直接修正してください');
+          endAt.setDate(endAt.getDate() + 1);
         }
         minutes = Math.round((endAt.getTime() - startAt.getTime()) / 60000);
         hours = roundHours_(minutes);
@@ -433,6 +445,25 @@ function updateLog(payload) {
       recentLogs: getRecentLogs_(5),
     };
   });
+}
+
+function getLogsByMonth(month) {
+  setup();
+  const target = parseMonth_(month);
+  return readLogObjects_()
+    .filter(function (log) {
+      return log.month === target.monthValue;
+    })
+    .sort(function (a, b) {
+      const dateCompare = String(b.dateIso || '').localeCompare(String(a.dateIso || ''));
+      if (dateCompare !== 0) {
+        return dateCompare;
+      }
+      return (getLogSortMinutes_(b) - getLogSortMinutes_(a)) || (b.sortTime - a.sortTime) || (b.rowNumber - a.rowNumber);
+    })
+    .map(function (log) {
+      return toClientLog_(log);
+    });
 }
 
 function getMonthlySummary(month) {
@@ -673,6 +704,37 @@ function getRecentLogs_(limit) {
     .slice(0, limit || 5);
 }
 
+function toClientLog_(log) {
+  return {
+    id: log.id,
+    type: log.type,
+    dateIso: log.dateIso,
+    dateDisplay: log.dateDisplay,
+    month: log.month,
+    start: log.start,
+    end: log.end,
+    content: log.content,
+    category: log.category,
+    koma: log.koma,
+    minutes: log.minutes,
+    hours: log.hours,
+    note: log.note,
+    createdDisplay: log.createdDisplay,
+    updatedDisplay: log.updatedDisplay,
+    lessonItems: log.type === APP_CONFIG.lessonType ? extractLessonContents_(log) : [],
+    isActive: log.isActive,
+  };
+}
+
+function getLogSortMinutes_(log) {
+  const normalized = normalizeTimeText_(log.start || log.end || '');
+  if (!normalized) {
+    return -1;
+  }
+  const parts = normalized.split(':').map(Number);
+  return parts[0] * 60 + parts[1];
+}
+
 function findActiveWork_() {
   const activeRow = findActiveWorkRow_();
   return activeRow ? rowToLog_(activeRow.values, activeRow.rowNumber) : null;
@@ -787,7 +849,10 @@ function aggregateWork_(summary, log) {
   if (!minutes && log.start && log.end) {
     const startAt = buildDateTime_(log.dateIso, log.start);
     const endAt = buildDateTime_(log.dateIso, log.end);
-    if (startAt && endAt && endAt.getTime() >= startAt.getTime()) {
+    if (startAt && endAt) {
+      if (endAt.getTime() < startAt.getTime()) {
+        endAt.setDate(endAt.getDate() + 1);
+      }
       minutes = Math.round((endAt.getTime() - startAt.getTime()) / 60000);
     }
   }

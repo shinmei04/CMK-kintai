@@ -2,39 +2,45 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>勤怠・請求メモ</title>
   <style>
     :root {
-      --bg: #f4f5f4;
-      --card: #ffffff;
-      --text: #1f2525;
-      --muted: #707977;
-      --line: #dde3e1;
-      --accent: #008b86;
-      --accent-dark: #007571;
-      --accent-soft: #eaf7f6;
-      --warning: #c62828;
-      --warning-bg: #fdeaea;
-      --danger: #c62828;
-      --danger-bg: #fdeaea;
-      --shadow: 0 8px 24px rgba(31, 37, 37, 0.08);
+      --background: #f2f2f7;
+      --surface: #ffffff;
+      --text-primary: #1c1c1e;
+      --text-secondary: #8e8e93;
+      --separator: rgba(60, 60, 67, 0.18);
+      --accent: #007aff;
+      --danger: #ff3b30;
+      --success: #34c759;
+      --focus: rgba(0, 122, 255, 0.22);
+      --sheet-overlay: rgba(0, 0, 0, 0.36);
+      --radius: 12px;
+      --page-width: 720px;
+      --nav-height: 64px;
     }
 
     * {
       box-sizing: border-box;
     }
 
+    html {
+      min-height: 100%;
+      background: var(--background);
+    }
+
     body {
+      min-height: 100%;
       margin: 0;
-      background:
-        radial-gradient(circle at top, rgba(255,255,255,0.95), rgba(244,245,244,0.98) 42%),
-        var(--bg);
-      color: var(--text);
-      overflow-x: hidden;
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Noto Sans JP", sans-serif;
       font-size: 16px;
-      line-height: 1.6;
+      line-height: 1.45;
+      letter-spacing: 0;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
     button,
@@ -42,324 +48,579 @@
     select,
     textarea {
       font: inherit;
-      max-width: 100%;
-      min-width: 0;
+      color: inherit;
+      letter-spacing: 0;
     }
 
     button {
       border: 0;
+      background: transparent;
       cursor: pointer;
     }
 
-    button:disabled {
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    textarea:disabled {
       cursor: not-allowed;
       opacity: 0.55;
-    }
-
-    .app {
-      width: min(100%, 1080px);
-      margin: 0 auto;
-      padding: 18px 16px 28px;
-      overflow-x: hidden;
-    }
-
-    .app-header {
-      display: grid;
-      gap: 10px;
-      padding: 12px 0 10px;
-    }
-
-    .title-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 1.45rem;
-      line-height: 1.25;
-      letter-spacing: 0;
-      font-weight: 750;
-    }
-
-    h2 {
-      margin: 0 0 12px;
-      font-size: 1.22rem;
-      letter-spacing: 0;
-      font-weight: 750;
-    }
-
-    h3 {
-      margin: 18px 0 8px;
-      font-size: 1rem;
-    }
-
-    .today {
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .today::before {
-      content: "▣";
-      margin-right: 6px;
-      color: var(--accent);
-      font-size: 0.9rem;
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 96px;
-      padding: 7px 12px;
-      border-radius: 999px;
-      background: var(--warning-bg);
-      color: var(--danger);
-      font-size: 0.88rem;
-      font-weight: 650;
-      white-space: nowrap;
-    }
-
-    .status-badge.active {
-      background: var(--accent-soft);
-      color: var(--accent-dark);
-    }
-
-    .alert {
-      padding: 10px 12px;
-      border: 1px solid #f1d18a;
-      border-radius: 8px;
-      background: var(--warning-bg);
-      color: var(--warning);
-      font-size: 0.92rem;
-      font-weight: 650;
-    }
-
-    .test-mode {
-      padding: 10px 12px;
-      border: 1px solid #d8dee9;
-      border-radius: 8px;
-      background: #f7f8fa;
-      color: #4b5563;
-      font-size: 0.9rem;
-      font-weight: 650;
-    }
-
-    .card {
-      margin: 16px 0;
-      padding: 22px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--card);
-      box-shadow: var(--shadow);
-    }
-
-    .app-main {
-      display: grid;
-      gap: 0;
-    }
-
-    .history-card {
-      padding: 0;
-      overflow: hidden;
-    }
-
-    .history-heading {
-      margin: 0;
-    }
-
-    .history-toggle {
-      display: flex;
-      width: 100%;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      min-height: 64px;
-      padding: 18px 22px;
-      background: transparent;
-      color: var(--text);
-      text-align: left;
-      font-size: 1.22rem;
-      font-weight: 750;
-      letter-spacing: 0;
-    }
-
-    .history-chevron {
-      color: var(--muted);
-      font-size: 1.2rem;
-      line-height: 1;
-      transition: transform 0.16s ease;
-    }
-
-    .history-toggle[aria-expanded="true"] .history-chevron {
-      transform: rotate(180deg);
-    }
-
-    .history-panel {
-      padding: 0 22px 16px;
-    }
-
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .form-grid {
-      display: grid;
-      min-width: 0;
-      gap: 13px;
-    }
-
-    .field {
-      display: grid;
-      min-width: 0;
-      gap: 7px;
-    }
-
-    .field label,
-    .label {
-      color: var(--muted);
-      font-size: 0.86rem;
-      font-weight: 650;
     }
 
     input,
     select,
     textarea {
-      width: 100%;
-      min-height: 42px;
-      padding: 9px 11px;
-      border: 1px solid #d9d9d7;
-      border-radius: 10px;
-      background: #fff;
-      color: var(--text);
+      min-height: 44px;
+      min-width: 0;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-primary);
+      font-size: 16px;
       outline: none;
     }
 
-    input[type="month"] {
-      display: block;
-      width: 100%;
-      min-width: 0;
-      max-width: 100%;
-      -webkit-appearance: none;
-      appearance: none;
+    textarea {
+      resize: vertical;
     }
 
     input:focus,
     select:focus,
-    textarea:focus {
-      border-color: #a8a8a5;
-      box-shadow: 0 0 0 2px rgba(55, 53, 47, 0.08);
+    textarea:focus,
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
     }
 
-    textarea {
-      min-height: 78px;
-      resize: vertical;
+    .app-shell {
+      width: 100%;
+      max-width: var(--page-width);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 20px 16px calc(var(--nav-height) + env(safe-area-inset-bottom) + 20px);
     }
 
-    .row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+    .desktop-nav {
+      display: none;
     }
 
-    .quick-buttons {
+    .test-mode {
+      margin: 4px 0 18px;
+      padding: 10px 12px;
+      border: 1px solid var(--separator);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 180ms ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page-header {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 8px 0 22px;
     }
 
-    .visually-hidden-control {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      white-space: nowrap;
+    .page-title {
+      margin: 0;
+      font-size: 31px;
+      line-height: 1.1;
+      font-weight: 760;
+      letter-spacing: 0;
     }
 
-    .segmented-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+    .page-subtitle,
+    .month-picker-label {
+      margin: 18px 0 0;
+      color: var(--text-secondary);
+      font-size: 16px;
+      font-weight: 600;
     }
 
-    .seg-button {
-      min-height: 42px;
-      padding: 9px 18px;
-      border: 1px solid #cfd8d6;
-      border-radius: 12px;
-      background: #fff;
-      color: var(--text);
+    .month-picker {
+      width: 138px;
+      min-height: 36px;
+      padding: 0 4px;
+      text-align: right;
+      color: var(--text-secondary);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .section {
+      margin-top: 28px;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
       font-weight: 700;
-      box-shadow: 0 2px 8px rgba(31, 37, 37, 0.04);
+      letter-spacing: 0;
     }
 
-    .seg-button.active {
-      border-color: var(--accent);
-      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    .group-list {
+      overflow: hidden;
+      border: 1px solid var(--separator);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .group-list + .primary-button,
+    .group-list + .secondary-button {
+      margin-top: 16px;
+    }
+
+    .list-row {
+      display: grid;
+      grid-template-columns: minmax(92px, 0.45fr) minmax(0, 1fr);
+      align-items: center;
+      min-height: 54px;
+      padding: 0 12px 0 14px;
+      border-bottom: 1px solid var(--separator);
+      column-gap: 12px;
+      background: var(--surface);
+    }
+
+    .list-row:last-child {
+      border-bottom: 0;
+    }
+
+    .list-row.tall {
+      align-items: start;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .list-label {
+      min-width: 0;
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .list-value {
+      min-width: 0;
+      color: var(--text-primary);
+      font-size: 16px;
+      text-align: right;
+    }
+
+    .list-value.muted {
+      color: var(--text-secondary);
+    }
+
+    .row-input,
+    .row-select,
+    .row-textarea {
+      width: 100%;
+      padding: 8px 0 8px 8px;
+      border-radius: 8px;
+      text-align: right;
+    }
+
+    .row-textarea {
+      min-height: 72px;
+      text-align: left;
+    }
+
+    .inline-help {
+      margin-top: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .status-block {
+      margin-top: 22px;
+    }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-secondary);
+    }
+
+    .status-dot.active {
+      background: var(--success);
+    }
+
+    .elapsed-time {
+      margin-top: 12px;
+      font-size: clamp(46px, 13vw, 62px);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      font-weight: 360;
+      letter-spacing: 0;
+    }
+
+    .work-content {
+      margin-top: 14px;
+      color: var(--text-secondary);
+      font-size: 20px;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .work-detail {
+      margin-top: 2px;
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+
+    .primary-button,
+    .secondary-button,
+    .danger-text-button {
+      width: 100%;
+      min-height: 50px;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .primary-button {
+      margin-top: 22px;
+      background: var(--accent);
       color: #fff;
     }
 
-    .koma-buttons {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .koma-button {
-      aspect-ratio: 1.35;
-      min-height: 70px;
-      border: 1px solid #d4dcda;
-      border-radius: 12px;
-      background: #fff;
+    .secondary-button {
+      border: 1px solid var(--separator);
+      background: var(--surface);
       color: var(--accent);
-      font-size: 2rem;
-      font-weight: 800;
-      box-shadow: 0 4px 14px rgba(31, 37, 37, 0.05);
     }
 
-    .koma-button.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      box-shadow: inset 0 0 0 1px var(--accent);
+    .danger-text-button {
+      color: var(--danger);
     }
 
-    .label-row {
+    .small-link-button {
+      min-height: 32px;
+      padding: 0;
+      color: var(--accent);
+      font-size: 15px;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .quick-list {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .lesson-items {
-      display: grid;
-      gap: 10px;
-    }
-
-    .lesson-item-row {
-      display: grid;
-      grid-template-columns: 72px 1fr;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .lesson-item-label {
-      color: var(--muted);
-      font-weight: 650;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      min-width: 0;
+      padding: 8px 0;
     }
 
     .quick-button {
-      min-height: 38px;
-      padding: 8px 14px;
-      border: 1px solid var(--accent);
+      min-height: 32px;
+      padding: 5px 10px;
+      border: 1px solid var(--separator);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .history-day {
+      margin-top: 26px;
+    }
+
+    .history-day-title {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.25;
+      font-weight: 750;
+    }
+
+    .history-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto 16px;
+      align-items: center;
+      width: 100%;
+      min-height: 68px;
+      padding: 10px 12px 10px 14px;
+      border-bottom: 1px solid var(--separator);
+      background: var(--surface);
+      color: var(--text-primary);
+      text-align: left;
+      column-gap: 12px;
+    }
+
+    .history-row:last-child {
+      border-bottom: 0;
+    }
+
+    .history-kind {
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .history-main {
+      margin-top: 2px;
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .history-sub {
+      margin-top: 3px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history-value {
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      padding: 18px 14px;
+      color: var(--text-secondary);
+      font-size: 15px;
+      text-align: center;
+    }
+
+    .warning-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .warning-item {
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 59, 48, 0.22);
       border-radius: 10px;
       background: #fff;
-      color: var(--accent-dark);
-      font-weight: 700;
+      color: var(--danger);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .copy-area {
+      width: 100%;
+      min-height: 160px;
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid var(--separator);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    .tab-bar {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 18;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      height: calc(var(--nav-height) + env(safe-area-inset-bottom));
+      padding: 4px 8px env(safe-area-inset-bottom);
+      border-top: 1px solid var(--separator);
+      background: rgba(248, 248, 248, 0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .tab-button {
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 2px;
+      min-height: 50px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .tab-button.active {
+      color: var(--accent);
+    }
+
+    .tab-icon {
+      width: 24px;
+      height: 24px;
+      color: currentColor;
+    }
+
+    .icon {
+      display: block;
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .chevron-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--text-secondary);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      align-items: end;
+      background: var(--sheet-overlay);
+      opacity: 1;
+      transition: opacity 220ms ease;
+    }
+
+    .edit-sheet {
+      width: 100%;
+      max-height: min(88vh, 760px);
+      overflow: auto;
+      padding: 8px 12px calc(18px + env(safe-area-inset-bottom));
+      border-radius: 16px 16px 0 0;
+      background: var(--background);
+      transform: translateY(0);
+      transition: transform 220ms ease;
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 5px;
+      margin: 0 auto 12px;
+      border-radius: 999px;
+      background: #a9a9b1;
+    }
+
+    .sheet-toolbar {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr) 88px;
+      align-items: center;
+      min-height: 44px;
+      margin-bottom: 8px;
+    }
+
+    .sheet-title {
+      margin: 0;
+      overflow: hidden;
+      font-size: 16px;
+      font-weight: 750;
+      text-align: center;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sheet-action {
+      min-height: 44px;
+      color: var(--accent);
+      font-size: 16px;
+      font-weight: 650;
+    }
+
+    .sheet-action:first-child {
+      text-align: left;
+    }
+
+    .sheet-action:last-child {
+      text-align: right;
+    }
+
+    .sheet-message {
+      min-height: 24px;
+      margin: 0 4px 8px;
+      color: var(--danger);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .sheet-saving {
+      margin: 0 4px 8px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .edit-section {
+      margin-top: 18px;
+    }
+
+    .delete-area {
+      margin-top: 24px;
+      border-top: 1px solid var(--separator);
+    }
+
+    .delete-area .danger-text-button {
+      border-radius: 0;
+    }
+
+    dialog {
+      width: min(calc(100% - 28px), 480px);
+      border: 0;
+      border-radius: 14px;
+      padding: 0;
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.32);
+    }
+
+    .dialog-body {
+      padding: 18px;
+    }
+
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .dialog-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 750;
+    }
+
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      color: var(--text-secondary);
     }
 
     .quick-inputs {
@@ -367,299 +628,22 @@
       gap: 10px;
     }
 
-    .primary-button,
-    .secondary-button,
-    .danger-button,
-    .ghost-button {
-      min-height: 48px;
-      padding: 12px 16px;
-      border-radius: 10px;
-      font-weight: 700;
-    }
-
-    .primary-button {
-      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-      color: #fff;
-      box-shadow: 0 6px 16px rgba(0, 139, 134, 0.20);
-    }
-
-    .primary-button:hover {
-      background: var(--accent-dark);
-    }
-
-    .secondary-button {
-      border: 1px solid var(--accent);
-      background: #fff;
-      color: var(--accent-dark);
-    }
-
-    .danger-button {
-      background: var(--danger-bg);
-      color: var(--danger);
-    }
-
-    .ghost-button {
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--text);
-    }
-
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .button-row > button {
-      flex: 1 1 160px;
-    }
-
-    .work-state {
-      display: grid;
-      gap: 12px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #fbfdfd;
-    }
-
-    .big-time {
-      font-size: 2rem;
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: 0;
-    }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .log-list {
-      display: grid;
-      gap: 0;
-    }
-
-    .log-item {
-      display: grid;
-      grid-template-columns: 44px minmax(0, 1fr) 58px;
-      align-items: center;
-      gap: 8px;
-      min-height: 42px;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--line);
-      font-size: 0.95rem;
-    }
-
-    .log-item:last-child {
-      border-bottom: 0;
-    }
-
-    .log-empty {
-      display: block;
-      color: var(--muted);
-    }
-
-    .log-date,
-    .log-value {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .log-main {
-      display: grid;
-      min-width: 0;
-      gap: 1px;
-    }
-
-    .log-primary,
-    .log-billing {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .log-primary {
-      line-height: 1.2;
-    }
-
-    .log-billing {
-      color: var(--muted);
-      font-size: 0.78rem;
-      line-height: 1.2;
-    }
-
-    .log-date,
-    .log-value {
-      font-variant-numeric: tabular-nums;
-    }
-
-    .log-value {
-      font-weight: 700;
-      text-align: right;
-    }
-
-    .mini-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .mini-button {
-      min-height: 34px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      background: #f7f7f5;
-      color: var(--text);
-      font-size: 0.9rem;
-      font-weight: 650;
-      white-space: nowrap;
-    }
-
-    .mini-button.danger {
-      border-color: #fecaca;
-      color: var(--danger);
-    }
-
-    .summary-label {
-      color: var(--muted);
-      font-size: 0.84rem;
-      font-weight: 650;
-    }
-
-    .summary-value {
-      margin-top: 4px;
-      font-size: 1.35rem;
-      font-weight: 750;
-    }
-
-    .summary-compact {
-      width: 100%;
-      margin-top: 12px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      overflow: hidden;
-      background: #fff;
-    }
-
-    .summary-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 10px;
-      align-items: center;
-      padding: 9px 11px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .summary-row:last-child {
-      border-bottom: 0;
-    }
-
-    .summary-row .summary-label {
-      min-width: 0;
-      font-size: 0.9rem;
-    }
-
-    .summary-row .summary-value {
-      margin: 0;
-      font-size: 1rem;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .table-wrap {
-      width: 100%;
-      overflow-x: auto;
-      margin-top: 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 620px;
-    }
-
-    th,
-    td {
-      padding: 10px;
-      border-bottom: 1px solid var(--line);
-      text-align: left;
-      vertical-align: top;
-      word-break: break-word;
-    }
-
-    th {
-      background: #f1f5f5;
-      color: var(--muted);
-      font-size: 0.88rem;
-      white-space: nowrap;
-    }
-
-    .detail-list {
-      display: grid;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .detail-item {
-      padding: 10px 11px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfbfa;
-    }
-
-    .detail-main {
-      font-weight: 700;
-      word-break: break-word;
-    }
-
-    .detail-sub {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .warning-list {
-      display: grid;
-      gap: 8px;
-      margin: 12px 0;
-    }
-
-    .warning-item {
-      padding: 10px 12px;
-      border: 1px solid #fed7aa;
-      border-radius: 8px;
-      background: var(--warning-bg);
-      color: var(--warning);
-      font-weight: 650;
-    }
-
-    .copy-area {
-      margin-top: 12px;
-      min-height: 210px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.92rem;
-    }
-
     .toast {
       position: fixed;
       right: 14px;
-      bottom: 14px;
+      bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 12px);
       left: 14px;
-      z-index: 20;
+      z-index: 50;
       display: none;
-      max-width: 720px;
+      max-width: 680px;
       margin: 0 auto;
-      padding: 13px 14px;
-      border-radius: 8px;
-      background: #37352f;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(28, 28, 30, 0.94);
       color: #fff;
+      font-size: 14px;
       font-weight: 650;
-      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14);
+      text-align: center;
     }
 
     .toast.show {
@@ -670,260 +654,245 @@
       background: var(--danger);
     }
 
-    dialog {
-      width: min(calc(100% - 24px), 560px);
-      border: 0;
-      border-radius: 14px;
-      padding: 0;
-      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+    @media (min-width: 760px) {
+      .app-shell {
+        max-width: var(--page-width);
+        padding: 28px 22px 48px;
+      }
+
+      .desktop-nav {
+        position: sticky;
+        top: 0;
+        z-index: 12;
+        display: flex;
+        justify-content: center;
+        margin: 0 0 28px;
+        padding: 8px;
+        border: 1px solid var(--separator);
+        border-radius: 12px;
+        background: var(--surface);
+      }
+
+      .desktop-nav .tab-button {
+        display: inline-flex;
+        flex: 1 1 0;
+        min-height: 40px;
+        justify-content: center;
+        border-radius: 9px;
+        font-size: 14px;
+        gap: 6px;
+      }
+
+      .desktop-nav .tab-button.active {
+        background: rgba(0, 122, 255, 0.10);
+      }
+
+      .desktop-nav .tab-icon {
+        width: 18px;
+        height: 18px;
+      }
+
+      .tab-bar {
+        display: none;
+      }
+
+      .page-header {
+        margin-top: 0;
+      }
+
+      .page-title {
+        font-size: 34px;
+      }
+
+      .sheet-overlay {
+        align-items: center;
+        justify-items: center;
+        padding: 24px;
+      }
+
+      .edit-sheet {
+        width: min(100%, 540px);
+        max-height: min(86vh, 760px);
+        border-radius: 16px;
+        padding: 8px 12px 18px;
+      }
+
+      .toast {
+        bottom: 18px;
+      }
     }
 
-    dialog::backdrop {
-      background: rgba(15, 23, 42, 0.35);
-    }
-
-    .dialog-body {
-      padding: 18px;
-      background: #fff;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    @media (max-width: 560px) {
-      .app {
-        padding: 12px;
+    @media (max-width: 420px) {
+      .app-shell {
+        padding-right: 12px;
+        padding-left: 12px;
       }
 
-      .title-row {
-        align-items: stretch;
-        flex-direction: column;
+      .list-row {
+        grid-template-columns: minmax(82px, 0.42fr) minmax(0, 1fr);
       }
 
-      .row-2,
-      .lesson-item-row {
-        grid-template-columns: 1fr;
-      }
-
-      .card {
-        padding: 16px;
-      }
-
-      .history-card {
-        padding: 0;
-      }
-
-      .history-toggle {
-        min-height: 54px;
-        padding: 14px 16px;
-      }
-
-      .history-panel {
-        padding: 0 16px 14px;
-      }
-
-      .button-row > button {
-        flex-basis: 100%;
+      .history-row {
+        grid-template-columns: minmax(0, 1fr) auto 14px;
+        column-gap: 8px;
       }
     }
 
-    @media (min-width: 900px) {
-      .app {
-        padding: 24px 24px 36px;
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
       }
+    }
 
-      .app-header {
-        padding-top: 4px;
-      }
-
-      .app-main {
-        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-        gap: 18px;
-        align-items: start;
-      }
-
-      .app-main > .card {
-        margin: 0;
-      }
-
-      .lesson-card {
-        grid-column: 1;
-        grid-row: 1 / span 2;
-      }
-
-      .work-card,
-      .recent-card {
-        grid-column: 2;
-      }
-
-      .monthly-card {
-        grid-column: 1 / -1;
-      }
-
-      .monthly-card .form-grid {
-        grid-template-columns: minmax(220px, 260px) minmax(180px, 240px);
-        align-items: end;
-      }
-
-      .monthly-card #summaryResult,
-      .monthly-card .button-row,
-      .monthly-card .copy-area {
-        grid-column: 1 / -1;
-      }
-
-      .koma-button {
-        min-height: 58px;
-        aspect-ratio: auto;
-        font-size: 1.55rem;
-      }
-
-      .lesson-items {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header class="app-header">
-      <div class="title-row">
-        <div>
-          <h1>勤怠・請求メモ</h1>
-          <div id="todayLabel" class="today">読み込み中...</div>
-        </div>
-        <div id="statusBadge" class="status-badge">停止中</div>
-      </div>
-      <div id="testModeBanner" class="test-mode hidden">PCテストモード：保存先はこのブラウザです Apps Script公開後はスプレッドシートに保存されます</div>
-      <div id="topAlert" class="alert hidden"></div>
-    </header>
+  <div class="app-shell">
+    <nav class="desktop-nav" aria-label="画面切り替え">
+      <button class="tab-button active" type="button" data-tab="today" aria-label="今日を表示">
+        <span class="tab-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16M8 14h4"></path></svg>
+        </span>
+        <span>今日</span>
+      </button>
+      <button class="tab-button" type="button" data-tab="history" aria-label="履歴を表示">
+        <span class="tab-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"></path><path d="M17 16l2 2 3-4"></path></svg>
+        </span>
+        <span>履歴</span>
+      </button>
+      <button class="tab-button" type="button" data-tab="summary" aria-label="集計を表示">
+        <span class="tab-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M5 19V11M12 19V5M19 19v-7"></path><path d="M4 19h16"></path></svg>
+        </span>
+        <span>集計</span>
+      </button>
+    </nav>
 
-    <main class="app-main">
-      <section class="card lesson-card" aria-labelledby="lessonTitle">
-        <h2 id="lessonTitle" class="section-title">講師業務</h2>
-        <div class="form-grid">
-          <div class="field">
-            <div id="lessonAutoDate" class="muted">今日の日付で自動保存します</div>
-            <input id="lessonDate" type="hidden">
+    <div id="testModeBanner" class="test-mode hidden">PCテストモード：保存先はこのブラウザです。Apps Script公開後はスプレッドシートに保存されます。</div>
+
+    <main>
+      <section id="pageToday" class="page active" aria-labelledby="todayTitle">
+        <header class="page-header">
+          <div>
+            <h1 id="todayTitle" class="page-title">勤怠</h1>
+            <p id="todayLabel" class="page-subtitle">読み込み中...</p>
           </div>
+        </header>
 
-          <div class="field">
-            <label for="lessonKoma">コマ数</label>
-            <select id="lessonKoma" class="visually-hidden-control">
-              <option value="1">1コマ</option>
-              <option value="2">2コマ</option>
-              <option value="3">3コマ</option>
-              <option value="4">4コマ</option>
-            </select>
-            <div id="lessonKomaButtons" class="koma-buttons"></div>
+        <div id="workStatusArea" class="status-block"></div>
+
+        <section class="section" aria-labelledby="lessonTitle">
+          <h2 id="lessonTitle" class="section-title">レッスン</h2>
+          <div id="lessonGroup" class="group-list">
+            <label class="list-row" for="lessonKoma">
+              <span class="list-label">コマ数</span>
+              <select id="lessonKoma" class="row-select" aria-label="講師業務のコマ数">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </label>
+            <div id="lessonItems"></div>
+            <label class="list-row tall" for="lessonNote">
+              <span class="list-label">メモ</span>
+              <textarea id="lessonNote" class="row-textarea" aria-label="講師業務のメモ" placeholder="なし"></textarea>
+            </label>
           </div>
-
-          <div class="field">
-            <div class="label">各コマの内容</div>
-            <div id="lessonItems" class="lesson-items"></div>
-          </div>
-
-          <div class="field">
-            <label for="lessonNote">補足メモ（任意）</label>
-            <textarea id="lessonNote" placeholder="例：3コマ目は体験会など"></textarea>
-          </div>
-
-          <button id="saveLessonButton" class="primary-button">レッスンを保存</button>
-        </div>
+          <button id="saveLessonButton" class="primary-button" type="button">講師業務を登録</button>
+        </section>
       </section>
 
-      <section class="card work-card" aria-labelledby="workTitle">
-        <h2 id="workTitle" class="section-title">講師外業務</h2>
-        <div id="workArea"></div>
-      </section>
-
-      <section class="card history-card recent-card" aria-labelledby="recentTitle">
-        <h2 id="recentTitle" class="history-heading">
-          <button id="recentToggleButton" class="history-toggle" type="button" aria-expanded="false" aria-controls="recentLogPanel">
-            <span>勤怠歴</span>
-            <span class="history-chevron" aria-hidden="true">⌄</span>
-          </button>
-        </h2>
-        <div id="recentLogPanel" class="history-panel hidden">
-          <div id="recentLogList" class="log-list"></div>
-        </div>
-      </section>
-
-      <section class="card history-card monthly-card" aria-labelledby="monthlyTitle">
-        <h2 id="monthlyTitle" class="history-heading">
-          <button id="monthlyToggleButton" class="history-toggle" type="button" aria-expanded="false" aria-controls="monthlyPanel">
-            <span>月次出力</span>
-            <span class="history-chevron" aria-hidden="true">⌄</span>
-          </button>
-        </h2>
-        <div id="monthlyPanel" class="history-panel hidden">
-          <div class="form-grid">
-            <div class="field">
-              <label for="targetMonth">対象月</label>
-              <input id="targetMonth" type="month">
-            </div>
-
-            <button id="loadSummaryButton" class="primary-button">申請用出力</button>
-
-            <div id="summaryResult" class="hidden"></div>
-
-            <div class="button-row">
-              <button id="copyTextButton" class="secondary-button" disabled>コピー用テキストを作成</button>
-            </div>
-
-            <textarea id="copyText" class="copy-area hidden" readonly></textarea>
+      <section id="pageHistory" class="page" aria-labelledby="historyTitle">
+        <header class="page-header">
+          <div>
+            <h1 id="historyTitle" class="page-title">履歴</h1>
           </div>
-        </div>
+          <label>
+            <span class="month-picker-label hidden">対象月</span>
+            <input id="historyMonth" class="month-picker" type="month" aria-label="履歴の対象月">
+          </label>
+        </header>
+        <div id="historyList"></div>
+      </section>
+
+      <section id="pageSummary" class="page" aria-labelledby="summaryTitle">
+        <header class="page-header">
+          <div>
+            <h1 id="summaryTitle" class="page-title">集計</h1>
+          </div>
+          <label>
+            <span class="month-picker-label hidden">対象月</span>
+            <input id="summaryMonth" class="month-picker" type="month" aria-label="集計の対象月">
+          </label>
+        </header>
+
+        <div id="summaryGroup" class="group-list"></div>
+        <div id="summaryWarnings" class="warning-list"></div>
+        <button id="copyTextButton" class="primary-button" type="button" disabled>コピー用テキストを作成</button>
+        <textarea id="copyText" class="copy-area hidden" readonly aria-label="コピー用テキスト"></textarea>
       </section>
     </main>
   </div>
 
-  <dialog id="workStartDialog">
-    <div class="dialog-body">
-      <h2>講師外業務の出勤</h2>
-      <div class="form-grid">
-        <div class="field">
-          <label for="startWorkContent">内容</label>
-          <textarea id="startWorkContent" placeholder="例：ULMTG"></textarea>
-        </div>
+  <nav class="tab-bar" aria-label="画面切り替え">
+    <button class="tab-button active" type="button" data-tab="today" aria-label="今日を表示">
+      <span class="tab-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16M8 14h4"></path></svg>
+      </span>
+      <span>今日</span>
+    </button>
+    <button class="tab-button" type="button" data-tab="history" aria-label="履歴を表示">
+      <span class="tab-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"></path><path d="M17 16l2 2 3-4"></path></svg>
+      </span>
+      <span>履歴</span>
+    </button>
+    <button class="tab-button" type="button" data-tab="summary" aria-label="集計を表示">
+      <span class="tab-icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M5 19V11M12 19V5M19 19v-7"></path><path d="M4 19h16"></path></svg>
+      </span>
+      <span>集計</span>
+    </button>
+  </nav>
 
-        <div class="field">
-          <label for="startWorkCategory">分類</label>
-          <select id="startWorkCategory"></select>
-        </div>
-
-        <div class="field">
-          <div class="label-row">
-            <div class="label">よく使う内容</div>
-            <button id="editQuickItemsButton" class="mini-button" type="button">編集</button>
-          </div>
-          <div id="startWorkQuickButtons" class="quick-buttons"></div>
-        </div>
-
-        <div class="field">
-          <label for="startWorkNote">メモ（任意）</label>
-          <textarea id="startWorkNote" placeholder="補足があれば入力"></textarea>
-        </div>
-
-        <div class="button-row">
-          <button id="confirmStartWorkButton" class="primary-button" type="button">出勤する</button>
-          <button id="cancelStartWorkButton" class="ghost-button" type="button">閉じる</button>
-        </div>
+  <div id="editOverlay" class="sheet-overlay hidden" aria-hidden="true">
+    <section class="edit-sheet" role="dialog" aria-modal="true" aria-labelledby="editSheetTitle">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-toolbar">
+        <button id="cancelEditButton" class="sheet-action" type="button">キャンセル</button>
+        <h2 id="editSheetTitle" class="sheet-title">勤務実績を編集</h2>
+        <button id="saveEditButton" class="sheet-action" type="button">完了</button>
       </div>
-    </div>
-  </dialog>
+      <div id="editSheetSaving" class="sheet-saving hidden" role="status">保存中...</div>
+      <div id="editSheetError" class="sheet-message" role="alert"></div>
+      <div id="editFields"></div>
+      <div class="delete-area">
+        <button id="deleteLogButton" class="danger-text-button" type="button">この勤務実績を削除</button>
+      </div>
+    </section>
+  </div>
 
   <dialog id="quickItemsDialog">
     <div class="dialog-body">
-      <h2>よく使う内容を編集</h2>
-      <div class="form-grid">
-        <div class="muted">最大6個まで登録できます空欄は保存時に無視されます</div>
-        <div id="quickItemInputs" class="quick-inputs"></div>
-        <div class="button-row">
-          <button id="saveQuickItemsButton" class="primary-button" type="button">保存</button>
-          <button id="closeQuickItemsButton" class="ghost-button" type="button">閉じる</button>
-        </div>
+      <div class="dialog-header">
+        <h2 class="dialog-title">よく使う内容を編集</h2>
+        <button id="closeQuickItemsButton" class="icon-button" type="button" aria-label="閉じる">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
       </div>
+      <div id="quickItemInputs" class="quick-inputs"></div>
+      <button id="saveQuickItemsButton" class="primary-button" type="button">保存</button>
     </div>
   </dialog>
 
@@ -958,40 +927,31 @@
       'キャンプその他': '通常コマ',
       'その他・要確認': 'その他・要確認',
     };
-    const LESSON_CONTENT_LABELS = {
-      CB: 'コマンドブースター',
-      CS: 'コマンドスタンダード',
-      MJ: 'マイプロジュニア',
-      MS: 'マイプロスタンダード',
-      CE: 'CE',
-      'プラコ': 'プライベートコース',
-      '体験会': '体験会',
-      '振替': '振替',
-      '補講': '補講',
-      'キャンプ10時': 'キャンプ10時',
-      'キャンプその他': 'キャンプその他',
-      'その他・要確認': 'その他・要確認',
-    };
     const LESSON_CONTENT_ALIASES = {
       'キャンプ(10時)': 'キャンプ10時',
       'キャンプ': 'キャンプその他',
     };
-    const LESSON_BILLING_LABELS = {
-      '通常コマ': '通常コマ',
-      'キャンプ10時': 'キャンプ10時 +500円',
-      'その他・要確認': '要確認',
-    };
+    const LOCAL_STORAGE_KEY = 'kintai_logs_pc_test_v1';
+    const LOCAL_QUICK_ITEMS_KEY = 'kintai_work_quick_items_v1';
+    const DEFAULT_WORK_QUICK_ITEMS = ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務', 'UL面談', '模擬レッスン'];
+    const WORK_CATEGORIES = ['教材開発', 'SNS', '研修', 'その他MTGなど'];
+    const LESSON_CATEGORIES = ['通常コマ', 'キャンプ10時', 'その他・要確認'];
 
     const state = {
-      lessonCategories: [],
-      lessonItemOptions: [],
-      workCategories: [],
-      workQuickItems: [],
+      currentTab: 'today',
       todayIso: '',
+      currentMonth: '',
+      lessonItemOptions: LESSON_CONTENT_OPTIONS.slice(),
+      workCategories: WORK_CATEGORIES.slice(),
+      workQuickItems: DEFAULT_WORK_QUICK_ITEMS.slice(),
       activeWork: null,
-      recentLogs: [],
+      historyLogs: [],
       summary: null,
       editingLog: null,
+      editSaving: false,
+      editDeleting: false,
+      timerId: null,
+      busy: false,
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1000,40 +960,46 @@
     });
 
     function bindStaticEvents() {
+      document.querySelectorAll('[data-tab]').forEach((button) => {
+        button.addEventListener('click', () => switchTab(button.dataset.tab));
+      });
+      $('lessonKoma').addEventListener('change', renderLessonItemRows);
       $('saveLessonButton').addEventListener('click', saveLesson);
-      $('lessonKoma').addEventListener('change', renderLessonItemSelectors);
-      $('loadSummaryButton').addEventListener('click', loadMonthlySummary);
+      $('historyMonth').addEventListener('change', () => loadHistoryMonth($('historyMonth').value));
+      $('summaryMonth').addEventListener('change', () => loadMonthlySummary($('summaryMonth').value));
       $('copyTextButton').addEventListener('click', createCopyText);
-      $('confirmStartWorkButton').addEventListener('click', confirmStartWork);
-      $('cancelStartWorkButton').addEventListener('click', closeStartWorkDialog);
-      $('saveQuickItemsButton').addEventListener('click', saveQuickItems);
+      $('cancelEditButton').addEventListener('click', closeEditSheet);
+      $('saveEditButton').addEventListener('click', saveEditedLog);
+      $('deleteLogButton').addEventListener('click', deleteEditedLog);
+      $('editOverlay').addEventListener('click', (event) => {
+        if (event.target === $('editOverlay')) {
+          closeEditSheet();
+        }
+      });
       $('closeQuickItemsButton').addEventListener('click', closeQuickItemsDialog);
-      $('recentToggleButton').addEventListener('click', toggleRecentLogs);
-      $('monthlyToggleButton').addEventListener('click', toggleMonthlyOutput);
+      $('saveQuickItemsButton').addEventListener('click', saveQuickItems);
     }
 
     async function loadApp() {
       try {
         setBusy(true);
         const data = await gas('getInitialData');
-        state.lessonCategories = data.lessonCategories;
-        state.lessonItemOptions = data.lessonContentOptions || data.lessonItemOptions || LESSON_CONTENT_OPTIONS;
-        state.workCategories = data.workCategories;
-        state.workQuickItems = data.workQuickItems;
         state.todayIso = data.todayIso;
-        state.activeWork = data.activeWork;
-        state.recentLogs = data.recentLogs || [];
+        state.currentMonth = data.currentMonth;
+        state.lessonItemOptions = data.lessonContentOptions || data.lessonItemOptions || LESSON_CONTENT_OPTIONS.slice();
+        state.workCategories = data.workCategories || WORK_CATEGORIES.slice();
+        state.workQuickItems = data.workQuickItems || DEFAULT_WORK_QUICK_ITEMS.slice();
+        state.activeWork = data.activeWork || null;
 
-        $('todayLabel').textContent = data.todayDisplay;
-        $('lessonAutoDate').textContent = `${data.todayDisplay} で自動保存します`;
-        $('lessonDate').value = data.todayIso;
-        $('targetMonth').value = data.currentMonth;
-        renderLessonKomaButtons();
-        renderLessonItemSelectors();
-        renderWorkArea();
-        renderRecentLogs();
-        renderHeader();
+        $('todayLabel').textContent = addWeekdayToDisplay(data.todayIso, data.todayDisplay);
+        $('historyMonth').value = data.currentMonth;
+        $('summaryMonth').value = data.currentMonth;
         $('testModeBanner').classList.toggle('hidden', hasAppsScript());
+
+        renderLessonItemRows();
+        renderToday();
+        await loadHistoryMonth(data.currentMonth, { silent: true });
+        await loadMonthlySummary(data.currentMonth, { silent: true });
       } catch (error) {
         showError(error);
       } finally {
@@ -1041,241 +1007,677 @@
       }
     }
 
-    async function refreshFromResult(result) {
-      state.activeWork = result.activeWork;
-      state.recentLogs = result.recentLogs || [];
-      renderHeader();
-      renderWorkArea();
-      renderRecentLogs();
-      showToast(result.message || '更新しました');
+    async function refreshAfterMutation(message) {
+      const data = await gas('getInitialData');
+      state.todayIso = data.todayIso;
+      state.currentMonth = data.currentMonth;
+      state.workQuickItems = data.workQuickItems || state.workQuickItems;
+      state.activeWork = data.activeWork || null;
+      $('todayLabel').textContent = addWeekdayToDisplay(data.todayIso, data.todayDisplay);
+      renderToday();
+      await loadHistoryMonth($('historyMonth').value || data.currentMonth, { silent: true });
+      await loadMonthlySummary($('summaryMonth').value || data.currentMonth, { silent: true });
+      if (message) {
+        showToast(message);
+      }
     }
 
-    function renderHeader() {
-      const badge = $('statusBadge');
-      const alert = $('topAlert');
+    function switchTab(tabName) {
+      state.currentTab = tabName;
+      document.querySelectorAll('.page').forEach((page) => {
+        page.classList.toggle('active', page.id === `page${capitalize(tabName)}`);
+      });
+      document.querySelectorAll('[data-tab]').forEach((button) => {
+        const active = button.dataset.tab === tabName;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-current', active ? 'page' : 'false');
+      });
+      if (tabName === 'history' && !state.historyLogs.length) {
+        loadHistoryMonth($('historyMonth').value || state.currentMonth);
+      }
+      if (tabName === 'summary' && !state.summary) {
+        loadMonthlySummary($('summaryMonth').value || state.currentMonth);
+      }
+    }
+
+    function renderToday() {
+      renderWorkStatus();
+      renderLessonItemRows();
+    }
+
+    function renderWorkStatus() {
+      const area = $('workStatusArea');
+      clear(area);
+      stopElapsedTimer();
+
       if (state.activeWork) {
-        badge.textContent = '講師外業務中';
-        badge.classList.add('active');
-        alert.textContent = `未終了の講師外業務があります 開始：${state.activeWork.dateDisplay} ${state.activeWork.start}`;
-        alert.classList.remove('hidden');
-      } else {
-        badge.textContent = '停止中';
-        badge.classList.remove('active');
-        alert.classList.add('hidden');
-        alert.textContent = '';
-      }
-    }
-
-    function renderWorkArea() {
-      const area = $('workArea');
-      if (!state.activeWork) {
-        area.innerHTML = `
-          <div class="work-state">
-            <div>
-              <div class="label">状態</div>
-              <div class="big-time">停止中</div>
-            </div>
-            <button id="startWorkButton" class="primary-button">出勤</button>
-          </div>
-        `;
-        $('startWorkButton').addEventListener('click', openStartWorkDialog);
+        const status = createEl('div', { className: 'status-line' }, [
+          createEl('span', { className: 'status-dot active', ariaHidden: 'true' }),
+          '勤務中',
+        ]);
+        const elapsed = createEl('div', { className: 'elapsed-time', id: 'elapsedTime' }, '00:00:00');
+        const content = createEl('div', { className: 'work-content' }, state.activeWork.content || '内容なし');
+        const detail = createEl('div', { className: 'work-detail' }, `${state.activeWork.start || '--:--'}から勤務しています`);
+        const finishButton = createEl('button', { className: 'primary-button', type: 'button', id: 'finishWorkButton' }, '退勤する');
+        finishButton.addEventListener('click', finishWork);
+        const cancelButton = createEl('button', { className: 'danger-text-button', type: 'button', id: 'cancelActiveWorkButton' }, '出勤を取り消す');
+        cancelButton.addEventListener('click', cancelActiveWork);
+        area.append(status, elapsed, content, detail, finishButton, cancelButton);
+        startElapsedTimer();
         return;
       }
 
-      area.innerHTML = `
-        <div class="work-state">
-          <div>
-            <div class="label">状態</div>
-            <div class="muted">講師外業務中</div>
-            <div class="label">出勤時刻</div>
-            <div class="big-time">${escapeHtml(state.activeWork.start)}</div>
-            <div class="muted">${escapeHtml(state.activeWork.dateDisplay)} / ${escapeHtml(state.activeWork.category || 'その他MTGなど')}</div>
-            <div>${escapeHtml(state.activeWork.content || '内容なし')}</div>
-          </div>
-          <div class="button-row">
-            <button id="finishWorkButton" class="primary-button">退勤</button>
-            <button id="cancelActiveWorkButton" class="danger-button">出勤を取り消す</button>
-          </div>
-        </div>
-      `;
-      $('finishWorkButton').addEventListener('click', finishWork);
-      $('cancelActiveWorkButton').addEventListener('click', cancelActiveWork);
+      const status = createEl('div', { className: 'status-line' }, [
+        createEl('span', { className: 'status-dot', ariaHidden: 'true' }),
+        '勤務していません',
+      ]);
+      const group = createEl('div', { className: 'group-list', style: 'margin-top: 16px;' });
+      group.append(
+        createInputRow('startWorkContent', '出勤時の内容', 'textarea', '例：ULMTG'),
+        createSelectRow('startWorkCategory', '分類', state.workCategories, 'その他MTGなど'),
+        createInputRow('startWorkNote', 'メモ', 'textarea', 'なし'),
+        createQuickItemsRow()
+      );
+
+      const startButton = createEl('button', { className: 'primary-button', type: 'button', id: 'startWorkButton' }, '出勤する');
+      startButton.addEventListener('click', confirmStartWork);
+      area.append(status, group, startButton);
+      renderQuickButtons();
     }
 
-    function renderRecentLogs() {
-      const container = $('recentLogList');
-      const logs = state.recentLogs || [];
-      if (!logs.length) {
-        container.innerHTML = '<div class="log-item log-empty">まだ記録がありません</div>';
-        return;
-      }
-
-      container.innerHTML = logs.map((log) => {
-        const display = getRecentLogDisplay(log);
-        return `
-          <div class="log-item">
-            <div class="log-date">${escapeHtml(getRecentLogDate(log))}</div>
-            <div class="log-main">
-              <div class="log-primary">${escapeHtml(display.primary)}</div>
-              ${display.billing ? `<div class="log-billing">[${escapeHtml(display.billing)}]</div>` : ''}
-            </div>
-            <div class="log-value">${escapeHtml(getRecentLogValue(log))}</div>
-          </div>
-        `;
-      }).join('');
+    function createInputRow(id, labelText, inputType, placeholder) {
+      const label = createEl('label', { className: 'list-row tall', htmlFor: id });
+      const labelSpan = createEl('span', { className: 'list-label' }, labelText);
+      const control = inputType === 'textarea'
+        ? createEl('textarea', { id, className: 'row-textarea', ariaLabel: labelText, placeholder })
+        : createEl('input', { id, className: 'row-input', type: inputType, ariaLabel: labelText, placeholder });
+      label.append(labelSpan, control);
+      return label;
     }
 
-    function toggleRecentLogs() {
-      const button = $('recentToggleButton');
-      const panel = $('recentLogPanel');
-      const nextExpanded = button.getAttribute('aria-expanded') !== 'true';
-      button.setAttribute('aria-expanded', String(nextExpanded));
-      panel.classList.toggle('hidden', !nextExpanded);
+    function createSelectRow(id, labelText, options, selectedValue) {
+      const label = createEl('label', { className: 'list-row', htmlFor: id });
+      const labelSpan = createEl('span', { className: 'list-label' }, labelText);
+      const select = createEl('select', { id, className: 'row-select', ariaLabel: labelText });
+      fillSelect(select, options);
+      if (selectedValue) select.value = selectedValue;
+      label.append(labelSpan, select);
+      return label;
     }
 
-    function toggleMonthlyOutput() {
-      const button = $('monthlyToggleButton');
-      const panel = $('monthlyPanel');
-      const nextExpanded = button.getAttribute('aria-expanded') !== 'true';
-      button.setAttribute('aria-expanded', String(nextExpanded));
-      panel.classList.toggle('hidden', !nextExpanded);
+    function createQuickItemsRow() {
+      const row = createEl('div', { className: 'list-row tall' });
+      row.append(
+        createEl('span', { className: 'list-label' }, 'よく使う内容'),
+        createEl('div', { className: 'quick-list', id: 'startWorkQuickButtons' }, [
+          createEl('button', { className: 'small-link-button', type: 'button', id: 'editQuickItemsButton' }, '編集'),
+        ])
+      );
+      row.querySelector('#editQuickItemsButton').addEventListener('click', openQuickItemsDialog);
+      return row;
     }
 
-    function getRecentLogDate(log) {
-      if (log.dateIso) {
-        return shortDateFromIso(log.dateIso);
-      }
-      const match = String(log.dateDisplay || '').match(/^\d{4}\/(\d{1,2})\/(\d{1,2})$/);
-      return match ? `${Number(match[1])}/${Number(match[2])}` : '';
-    }
-
-    function getRecentLogValue(log) {
-      if (log.type === 'レッスン') {
-        return log.koma ? `${log.koma}コマ` : '';
-      }
-      if (log.hours !== '' && typeof log.hours !== 'undefined') {
-        return `${Number(log.hours).toFixed(2)}h`;
-      }
-      if (log.minutes !== '' && typeof log.minutes !== 'undefined') {
-        return `${roundHoursClient(log.minutes).toFixed(2)}h`;
-      }
-      return log.start ? `${log.start}-` : '';
-    }
-
-    function getRecentLogDisplay(log) {
-      if (log.type !== 'レッスン') {
-        const kind = log.category || log.type || '';
-        const content = log.content || log.note || '';
-        return {
-          primary: [kind, content].filter(Boolean).join('　'),
-          billing: '',
-        };
-      }
-
-      const contents = extractLessonContentsClient(log);
-      return {
-        primary: contents.length ? contents.join(' / ') : log.content || '内容なし',
-        billing: getLessonBillingLabelClient(contents, log.category),
-      };
-    }
-
-    function getLessonBillingLabelClient(contents, fallbackCategory) {
-      const categories = (contents || []).map(getLessonBillingCategoryClient);
-      const unique = Array.from(new Set(categories));
-      if (!unique.length && fallbackCategory) {
-        unique.push(fallbackCategory);
-      }
-      if (unique.length === 1) {
-        return LESSON_BILLING_LABELS[unique[0]] || unique[0];
-      }
-      return unique.map((category) => LESSON_BILLING_LABELS[category] || category).join(' / ');
-    }
-
-    function renderLessonKomaButtons() {
-      const container = $('lessonKomaButtons');
-      container.innerHTML = [1, 2, 3, 4].map((number) => `
-        <button type="button" class="koma-button" data-koma="${number}">${number}</button>
-      `).join('');
-
-      container.querySelectorAll('button').forEach((button) => {
+    function renderQuickButtons() {
+      const container = $('startWorkQuickButtons');
+      if (!container) return;
+      const editButton = $('editQuickItemsButton');
+      clear(container);
+      state.workQuickItems.forEach((item) => {
+        const button = createEl('button', { className: 'quick-button', type: 'button' }, item);
         button.addEventListener('click', () => {
-          $('lessonKoma').value = button.dataset.koma;
-          updateLessonKomaButtons();
-          renderLessonItemSelectors();
+          const input = $('startWorkContent');
+          if (input) {
+            input.value = item;
+            input.focus();
+          }
         });
+        container.appendChild(button);
       });
-      updateLessonKomaButtons();
+      container.appendChild(editButton);
     }
 
-    function updateLessonKomaButtons() {
-      const value = $('lessonKoma').value;
-      document.querySelectorAll('#lessonKomaButtons .koma-button').forEach((button) => {
-        button.classList.toggle('active', button.dataset.koma === value);
-      });
-    }
-
-    function renderLessonItemSelectors() {
-      const count = Number($('lessonKoma').value || 1);
+    function renderLessonItemRows() {
+      const count = clampKoma($('lessonKoma').value);
+      $('lessonKoma').value = String(count);
       const container = $('lessonItems');
-      const options = state.lessonItemOptions.length
-        ? state.lessonItemOptions
-        : LESSON_CONTENT_OPTIONS;
-      container.innerHTML = Array.from({ length: count }, (_, index) => `
-        <div class="lesson-item-row">
-          <div class="lesson-item-label">${index + 1}コマ目</div>
-          <select class="lesson-item-select" aria-label="${index + 1}コマ目">
-            ${options.map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join('')}
-          </select>
-        </div>
-      `).join('');
+      clear(container);
+      for (let index = 0; index < count; index += 1) {
+        const row = createEl('label', { className: 'list-row', htmlFor: `lessonItem${index}` });
+        const select = createEl('select', {
+          id: `lessonItem${index}`,
+          className: 'row-select lesson-item-select',
+          ariaLabel: `${index + 1}コマ目`,
+        });
+        fillSelect(select, state.lessonItemOptions);
+        row.append(createEl('span', { className: 'list-label' }, `${index + 1}コマ目`), select);
+        container.appendChild(row);
+      }
     }
 
-    function getLessonItemValues() {
-      return Array.from(document.querySelectorAll('.lesson-item-select'))
+    async function confirmStartWork() {
+      if (state.busy) return;
+      const content = $('startWorkContent') ? $('startWorkContent').value.trim() : '';
+      if (!content) {
+        showToast('出勤時の内容を入力してください', true);
+        return;
+      }
+      const payload = {
+        content,
+        category: $('startWorkCategory').value,
+        note: $('startWorkNote').value,
+      };
+      try {
+        setBusy(true);
+        const result = await gas('startWork', payload);
+        await refreshAfterMutation(result.message || '出勤しました');
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function finishWork() {
+      if (state.busy) return;
+      try {
+        setBusy(true);
+        const result = await gas('finishWork');
+        await refreshAfterMutation(result.message || '退勤しました');
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function cancelActiveWork() {
+      if (state.busy) return;
+      if (!confirm('未退勤の出勤を取り消しますか？この出勤ログは削除されます。')) {
+        return;
+      }
+      try {
+        setBusy(true);
+        const result = await gas('cancelActiveWork');
+        await refreshAfterMutation(result.message || '出勤を取り消しました');
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function saveLesson() {
+      if (state.busy) return;
+      const lessonItems = getLessonItemValues();
+      const koma = clampKoma($('lessonKoma').value);
+      if (lessonItems.length !== koma || lessonItems.some((item) => !item)) {
+        showToast('コマ内容を選択してください', true);
+        return;
+      }
+      const payload = {
+        date: state.todayIso,
+        koma,
+        lessonItems,
+        content: lessonItems.join(' / '),
+        note: $('lessonNote').value,
+      };
+
+      try {
+        setBusy(true);
+        const result = await gas('saveLesson', payload);
+        $('lessonKoma').value = '1';
+        $('lessonNote').value = '';
+        renderLessonItemRows();
+        await refreshAfterMutation(result.message || '講師業務を登録しました');
+      } catch (error) {
+        showError(error);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function getLessonItemValues(scope = document) {
+      return Array.from(scope.querySelectorAll('.lesson-item-select'))
         .map((select) => select.value)
         .filter(Boolean);
     }
 
-    function openStartWorkDialog() {
-      $('startWorkContent').value = '';
-      $('startWorkNote').value = '';
-      fillSelect($('startWorkCategory'), state.workCategories);
-      $('startWorkCategory').value = 'その他MTGなど';
-      renderQuickButtons('startWorkQuickButtons', state.workQuickItems, (text) => {
-        $('startWorkContent').value = text;
-        $('startWorkContent').focus();
-      });
-      $('editQuickItemsButton').addEventListener('click', openQuickItemsDialog);
+    function startElapsedTimer() {
+      updateElapsedTime();
+      state.timerId = window.setInterval(updateElapsedTime, 1000);
+    }
 
-      const dialog = $('workStartDialog');
-      if (dialog.showModal) {
-        dialog.showModal();
-      } else {
-        dialog.setAttribute('open', 'open');
+    function stopElapsedTimer() {
+      if (state.timerId) {
+        window.clearInterval(state.timerId);
+        state.timerId = null;
       }
     }
 
-    function closeStartWorkDialog() {
-      const dialog = $('workStartDialog');
-      if (dialog.close) {
-        dialog.close();
+    function updateElapsedTime() {
+      const target = $('elapsedTime');
+      if (!target || !state.activeWork) return;
+      const startAt = buildClientDateTime(state.activeWork.dateIso, state.activeWork.start);
+      if (!startAt) {
+        target.textContent = '00:00:00';
+        return;
+      }
+      const elapsedMs = Math.max(0, Date.now() - startAt.getTime());
+      target.textContent = formatElapsed(Math.floor(elapsedMs / 1000));
+    }
+
+    async function loadHistoryMonth(month, options = {}) {
+      if (!month) return;
+      try {
+        if (!options.silent) setBusy(true);
+        state.historyLogs = await gas('getLogsByMonth', month);
+        renderHistoryLogs();
+      } catch (error) {
+        showError(error);
+      } finally {
+        if (!options.silent) setBusy(false);
+      }
+    }
+
+    function renderHistoryLogs() {
+      const container = $('historyList');
+      clear(container);
+      const logs = Array.isArray(state.historyLogs) ? state.historyLogs : [];
+      if (!logs.length) {
+        container.appendChild(createEl('div', { className: 'group-list' }, [
+          createEl('div', { className: 'empty-state' }, 'この月の勤務実績はありません'),
+        ]));
+        return;
+      }
+
+      groupLogsByDate(logs).forEach((group) => {
+        const section = createEl('section', { className: 'history-day' });
+        section.appendChild(createEl('h2', { className: 'history-day-title' }, formatDateHeading(group.dateIso, group.dateDisplay)));
+        const list = createEl('div', { className: 'group-list' });
+        group.logs.forEach((log) => {
+          list.appendChild(createHistoryRow(log));
+        });
+        section.appendChild(list);
+        container.appendChild(section);
+      });
+    }
+
+    function createHistoryRow(log) {
+      const button = createEl('button', { className: 'history-row', type: 'button', ariaLabel: `${log.dateDisplay || ''}の${log.type || '勤務実績'}を編集` });
+      const main = createEl('div');
+      const value = createEl('div', { className: 'history-value' });
+
+      if (log.type === 'レッスン') {
+        const lessonItems = getLogLessonItems(log);
+        main.append(
+          createEl('div', { className: 'history-kind' }, 'レッスン'),
+          createEl('div', { className: 'history-main' }, lessonItems.length ? lessonItems.join(' / ') : (log.content || '内容なし')),
+          createEl('div', { className: 'history-sub' }, `${log.koma || lessonItems.length || 0}コマ`)
+        );
+        value.textContent = `${log.koma || lessonItems.length || 0}コマ`;
       } else {
-        dialog.removeAttribute('open');
+        main.append(
+          createEl('div', { className: 'history-kind' }, log.type || '講師外業務'),
+          createEl('div', { className: 'history-main' }, log.content || '内容なし'),
+          createEl('div', { className: 'history-sub' }, `${log.start || '--:--'}-${log.end || '未退勤'} / ${log.category || '未分類'}`)
+        );
+        value.textContent = log.end ? formatDuration(getLogMinutes(log)) : '未退勤';
+      }
+
+      button.append(main, value, chevronIcon());
+      button.addEventListener('click', () => openEditSheet(log));
+      return button;
+    }
+
+    async function loadMonthlySummary(month, options = {}) {
+      if (!month) return;
+      try {
+        if (!options.silent) setBusy(true);
+        const summary = await gas('getMonthlySummary', month);
+        state.summary = summary;
+        renderSummary(summary);
+      } catch (error) {
+        showError(error);
+      } finally {
+        if (!options.silent) setBusy(false);
+      }
+    }
+
+    function renderSummary(summary) {
+      const group = $('summaryGroup');
+      clear(group);
+      group.append(
+        createSummaryRow('通常コマ', `${summary.normalKoma || 0}`),
+        createSummaryRow('キャンプ', `${summary.camp10Koma || 0}`),
+        createSummaryRow('講師外業務時間', formatHoursLabel(summary.workTotalHours)),
+        createSummaryRow('要確認件数', `${getSummaryConfirmCount(summary)}件`)
+      );
+
+      const warnings = $('summaryWarnings');
+      clear(warnings);
+      (summary.warnings || []).concat(summary.confirmNotes || []).forEach((message) => {
+        warnings.appendChild(createEl('div', { className: 'warning-item' }, message));
+      });
+      $('copyTextButton').disabled = false;
+      $('copyText').classList.add('hidden');
+      $('copyText').value = '';
+    }
+
+    function createSummaryRow(label, value) {
+      return createEl('div', { className: 'list-row' }, [
+        createEl('span', { className: 'list-label' }, label),
+        createEl('span', { className: 'list-value' }, value),
+      ]);
+    }
+
+    async function createCopyText() {
+      if (!state.summary) return;
+      const text = buildCopyText(state.summary);
+      $('copyText').value = text;
+      $('copyText').classList.remove('hidden');
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('コピー用テキストを作成してコピーしました');
+      } catch (error) {
+        $('copyText').focus();
+        $('copyText').select();
+        showToast('コピー用テキストを作成しました。必要に応じて選択してコピーしてください');
+      }
+    }
+
+    function buildCopyText(summary) {
+      const details = summary.details && summary.details.length
+        ? summary.details.map((detail) => `${detail.shortDate} ${detail.start}-${detail.end} ${detail.content}`)
+        : ['（なし）'];
+      return [
+        '講師外業務詳細',
+        ...details,
+      ].join('\n');
+    }
+
+    function openEditSheet(log) {
+      state.editingLog = cloneLog(log);
+      state.editSaving = false;
+      state.editDeleting = false;
+      $('editSheetError').textContent = '';
+      $('editSheetSaving').classList.add('hidden');
+      renderEditFields(state.editingLog);
+      $('editOverlay').classList.remove('hidden');
+      $('editOverlay').setAttribute('aria-hidden', 'false');
+      window.setTimeout(() => $('cancelEditButton').focus(), 0);
+    }
+
+    function closeEditSheet() {
+      if (state.editSaving || state.editDeleting) return;
+      state.editingLog = null;
+      $('editOverlay').classList.add('hidden');
+      $('editOverlay').setAttribute('aria-hidden', 'true');
+      clear($('editFields'));
+      $('editSheetError').textContent = '';
+    }
+
+    function renderEditFields(log) {
+      const container = $('editFields');
+      clear(container);
+      if (log.type === 'レッスン') {
+        container.appendChild(renderLessonEditFields(log));
+      } else {
+        container.appendChild(renderWorkEditFields(log));
+      }
+    }
+
+    function renderWorkEditFields(log) {
+      const fragment = document.createDocumentFragment();
+      const dateGroup = createEl('section', { className: 'edit-section' });
+      dateGroup.append(
+        createEl('h3', { className: 'section-title' }, '日付'),
+        createEl('div', { className: 'group-list' }, [
+          editInputRow('editDate', '日付', 'date', log.dateIso || state.todayIso),
+        ])
+      );
+
+      const timeGroup = createEl('section', { className: 'edit-section' });
+      const totalRow = createEl('div', { className: 'list-row' }, [
+        createEl('span', { className: 'list-label' }, '合計'),
+        createEl('span', { className: 'list-value', id: 'editWorkTotal' }, ''),
+      ]);
+      timeGroup.append(
+        createEl('h3', { className: 'section-title' }, '勤務時間'),
+        createEl('div', { className: 'group-list' }, [
+          editInputRow('editStart', '開始', 'time', log.start || ''),
+          editInputRow('editEnd', '終了', 'time', log.end || ''),
+          totalRow,
+        ])
+      );
+
+      const contentGroup = createEl('section', { className: 'edit-section' });
+      contentGroup.append(
+        createEl('h3', { className: 'section-title' }, '業務内容'),
+        createEl('div', { className: 'group-list' }, [
+          editInputRow('editContent', '内容', 'text', log.content || ''),
+          editSelectRow('editCategory', '分類', state.workCategories, log.category || ''),
+          editTextareaRow('editNote', 'メモ', log.note || ''),
+        ])
+      );
+
+      fragment.append(dateGroup, timeGroup, contentGroup);
+      window.setTimeout(bindWorkTotalUpdater, 0);
+      return fragment;
+    }
+
+    function renderLessonEditFields(log) {
+      const fragment = document.createDocumentFragment();
+      const lessonItems = getLogLessonItems(log);
+      const koma = clampKoma(log.koma || lessonItems.length || 1);
+
+      const dateGroup = createEl('section', { className: 'edit-section' });
+      dateGroup.append(
+        createEl('h3', { className: 'section-title' }, '日付'),
+        createEl('div', { className: 'group-list' }, [
+          editInputRow('editDate', '日付', 'date', log.dateIso || state.todayIso),
+        ])
+      );
+
+      const lessonGroup = createEl('section', { className: 'edit-section' });
+      const list = createEl('div', { className: 'group-list', id: 'editLessonList' });
+      const komaRow = editSelectRow('editKoma', 'コマ数', ['1', '2', '3', '4'], String(koma));
+      list.appendChild(komaRow);
+      const itemsWrap = createEl('div', { id: 'editLessonItems' });
+      list.appendChild(itemsWrap);
+      list.appendChild(editTextareaRow('editNote', 'メモ', log.note || ''));
+      lessonGroup.append(createEl('h3', { className: 'section-title' }, 'レッスン'), list);
+      fragment.append(dateGroup, lessonGroup);
+
+      window.setTimeout(() => {
+        renderEditLessonItems(lessonItems);
+        $('editKoma').addEventListener('change', () => renderEditLessonItems(getEditLessonItemValues()));
+      }, 0);
+      return fragment;
+    }
+
+    function editInputRow(id, labelText, type, value) {
+      const row = createEl('label', { className: 'list-row', htmlFor: id });
+      const input = createEl('input', { id, className: 'row-input', type, ariaLabel: labelText, value: value || '' });
+      row.append(createEl('span', { className: 'list-label' }, labelText), input);
+      return row;
+    }
+
+    function editTextareaRow(id, labelText, value) {
+      const row = createEl('label', { className: 'list-row tall', htmlFor: id });
+      const textarea = createEl('textarea', { id, className: 'row-textarea', ariaLabel: labelText, placeholder: 'なし' }, value || '');
+      row.append(createEl('span', { className: 'list-label' }, labelText), textarea);
+      return row;
+    }
+
+    function editSelectRow(id, labelText, options, selectedValue) {
+      const row = createEl('label', { className: 'list-row', htmlFor: id });
+      const select = createEl('select', { id, className: 'row-select', ariaLabel: labelText });
+      fillSelect(select, options);
+      select.value = selectedValue || options[0] || '';
+      row.append(createEl('span', { className: 'list-label' }, labelText), select);
+      return row;
+    }
+
+    function renderEditLessonItems(existingValues) {
+      const container = $('editLessonItems');
+      if (!container) return;
+      const count = clampKoma($('editKoma').value);
+      const values = Array.isArray(existingValues) ? existingValues : [];
+      clear(container);
+      for (let index = 0; index < count; index += 1) {
+        const row = createEl('label', { className: 'list-row', htmlFor: `editLessonItem${index}` });
+        const select = createEl('select', {
+          id: `editLessonItem${index}`,
+          className: 'row-select edit-lesson-item-select',
+          ariaLabel: `${index + 1}コマ目`,
+        });
+        fillSelect(select, state.lessonItemOptions);
+        select.value = normalizeLessonContentClient(values[index] || state.lessonItemOptions[0]);
+        row.append(createEl('span', { className: 'list-label' }, `${index + 1}コマ目`), select);
+        container.appendChild(row);
+      }
+    }
+
+    function bindWorkTotalUpdater() {
+      ['editDate', 'editStart', 'editEnd'].forEach((id) => {
+        const input = $(id);
+        if (input) input.addEventListener('input', updateEditWorkTotal);
+      });
+      updateEditWorkTotal();
+    }
+
+    function updateEditWorkTotal() {
+      const target = $('editWorkTotal');
+      if (!target) return;
+      const minutes = calculateWorkMinutes($('editDate').value, $('editStart').value, $('editEnd').value);
+      target.textContent = minutes === null ? '未計算' : formatDuration(minutes);
+    }
+
+    async function saveEditedLog() {
+      if (!state.editingLog || state.editSaving || state.editDeleting) return;
+      const payload = buildEditPayload();
+      if (!payload) return;
+
+      try {
+        state.editSaving = true;
+        setEditBusy(true, '保存中...');
+        const result = await gas('updateLog', payload);
+        state.editingLog = null;
+        $('editOverlay').classList.add('hidden');
+        $('editOverlay').setAttribute('aria-hidden', 'true');
+        await refreshAfterMutation(result.message || '勤務実績を更新しました');
+      } catch (error) {
+        $('editSheetError').textContent = formatError(error);
+      } finally {
+        state.editSaving = false;
+        setEditBusy(false);
+      }
+    }
+
+    function buildEditPayload() {
+      const log = state.editingLog;
+      const date = $('editDate') ? $('editDate').value : '';
+      if (!date) {
+        $('editSheetError').textContent = '日付を入力してください';
+        return null;
+      }
+
+      if (log.type === 'レッスン') {
+        const lessonItems = getEditLessonItemValues();
+        const koma = clampKoma($('editKoma').value);
+        if (lessonItems.length !== koma || lessonItems.some((item) => !item)) {
+          $('editSheetError').textContent = 'コマ内容を選択してください';
+          return null;
+        }
+        return {
+          id: log.id,
+          date,
+          koma,
+          lessonItems,
+          content: lessonItems.join(' / '),
+          note: $('editNote').value,
+        };
+      }
+
+      const start = $('editStart').value;
+      const end = $('editEnd').value;
+      const content = $('editContent').value.trim();
+      const category = $('editCategory').value;
+      if (!start) {
+        $('editSheetError').textContent = '開始時刻を入力してください';
+        return null;
+      }
+      if (end && (!content || !category)) {
+        $('editSheetError').textContent = '終了済みの講師外業務は内容と分類を入力してください';
+        return null;
+      }
+      return {
+        id: log.id,
+        date,
+        start,
+        end,
+        content,
+        category,
+        note: $('editNote').value,
+      };
+    }
+
+    function getEditLessonItemValues() {
+      return Array.from(document.querySelectorAll('.edit-lesson-item-select'))
+        .map((select) => select.value)
+        .filter(Boolean);
+    }
+
+    async function deleteEditedLog() {
+      if (!state.editingLog || state.editSaving || state.editDeleting) return;
+      if (!confirm('この勤務実績を削除しますか？この操作は元に戻せません。')) {
+        return;
+      }
+      try {
+        state.editDeleting = true;
+        setEditBusy(true, '削除中...');
+        const result = await gas('deleteLog', state.editingLog.id);
+        state.editingLog = null;
+        $('editOverlay').classList.add('hidden');
+        $('editOverlay').setAttribute('aria-hidden', 'true');
+        await refreshAfterMutation(result.message || '勤務実績を削除しました');
+      } catch (error) {
+        $('editSheetError').textContent = formatError(error);
+      } finally {
+        state.editDeleting = false;
+        setEditBusy(false);
+      }
+    }
+
+    function setEditBusy(isBusy, message = '') {
+      $('saveEditButton').disabled = isBusy;
+      $('cancelEditButton').disabled = isBusy;
+      $('deleteLogButton').disabled = isBusy;
+      $('editSheetSaving').textContent = message;
+      $('editSheetSaving').classList.toggle('hidden', !isBusy);
+      if (isBusy) {
+        $('editSheetError').textContent = '';
       }
     }
 
     function openQuickItemsDialog() {
-      const inputs = Array.from({ length: 6 }, (_, index) => {
-        const value = state.workQuickItems[index] || '';
-        return `
-          <div class="field">
-            <label for="quickItem${index}">${index + 1}個目</label>
-            <input id="quickItem${index}" class="quick-item-input" type="text" maxlength="40" value="${escapeHtml(value)}" placeholder="例：ULMTG">
-          </div>
-        `;
-      }).join('');
-      $('quickItemInputs').innerHTML = inputs;
-
+      const container = $('quickItemInputs');
+      clear(container);
+      for (let index = 0; index < 6; index += 1) {
+        const id = `quickItem${index}`;
+        const row = createEl('label', { className: 'list-row', htmlFor: id });
+        const input = createEl('input', {
+          id,
+          className: 'row-input quick-item-input',
+          type: 'text',
+          maxLength: '40',
+          value: state.workQuickItems[index] || '',
+          placeholder: '例：ULMTG',
+          ariaLabel: `${index + 1}個目のよく使う内容`,
+        });
+        row.append(createEl('span', { className: 'list-label' }, `${index + 1}個目`), input);
+        container.appendChild(row);
+      }
       const dialog = $('quickItemsDialog');
       if (dialog.showModal) {
         dialog.showModal();
@@ -1294,24 +1696,16 @@
     }
 
     async function saveQuickItems() {
+      if (state.busy) return;
       const items = Array.from(document.querySelectorAll('.quick-item-input'))
         .map((input) => input.value.trim())
         .filter(Boolean);
-
-      if (items.length > 6) {
-        showToast('よく使う内容は最大6個までです', true);
-        return;
-      }
-
       try {
         setBusy(true);
         const result = await gas('saveWorkQuickItems', items);
-        state.workQuickItems = result.workQuickItems;
-        renderQuickButtons('startWorkQuickButtons', state.workQuickItems, (text) => {
-          $('startWorkContent').value = text;
-          $('startWorkContent').focus();
-        });
+        state.workQuickItems = result.workQuickItems || items;
         closeQuickItemsDialog();
+        renderToday();
         showToast(result.message || 'よく使う内容を保存しました');
       } catch (error) {
         showError(error);
@@ -1319,347 +1713,6 @@
         setBusy(false);
       }
     }
-
-    async function confirmStartWork() {
-      const payload = {
-        content: $('startWorkContent').value,
-        category: $('startWorkCategory').value,
-        note: $('startWorkNote').value,
-      };
-
-      try {
-        setBusy(true);
-        const result = await gas('startWork', payload);
-        closeStartWorkDialog();
-        await refreshFromResult(result);
-      } catch (error) {
-        showError(error);
-      } finally {
-        setBusy(false);
-      }
-    }
-
-    async function saveLesson() {
-      const content = getLessonItemValues().join(' / ');
-      const payload = {
-        date: $('lessonDate').value || state.todayIso,
-        lessonItems: getLessonItemValues(),
-        koma: $('lessonKoma').value,
-        content,
-        note: $('lessonNote').value,
-      };
-
-      try {
-        setBusy(true);
-        const result = await gas('saveLesson', payload);
-        $('lessonNote').value = '';
-        $('lessonKoma').value = '1';
-        updateLessonKomaButtons();
-        renderLessonItemSelectors();
-        await refreshFromResult(result);
-      } catch (error) {
-        showError(error);
-      } finally {
-        setBusy(false);
-      }
-    }
-
-    async function finishWork() {
-      try {
-        setBusy(true);
-        const result = await gas('finishWork');
-        await refreshFromResult(result);
-      } catch (error) {
-        showError(error);
-      } finally {
-        setBusy(false);
-      }
-    }
-
-    async function cancelActiveWork() {
-      if (!confirm('未退勤の出勤を取り消しますか？この出勤ログは削除されます')) {
-        return;
-      }
-
-      try {
-        setBusy(true);
-        const result = await gas('cancelActiveWork');
-        await refreshFromResult(result);
-      } catch (error) {
-        showError(error);
-      } finally {
-        setBusy(false);
-      }
-    }
-
-    async function loadMonthlySummary() {
-      try {
-        setBusy(true);
-        const summary = await gas('getMonthlySummary', $('targetMonth').value);
-        state.summary = summary;
-        renderSummary(summary);
-        $('copyTextButton').disabled = false;
-        showToast('申請用出力を作成しました');
-      } catch (error) {
-        showError(error);
-      } finally {
-        setBusy(false);
-      }
-    }
-
-    function renderSummary(summary) {
-      const warnings = summary.warnings.length
-        ? `<div class="warning-list">${summary.warnings.map((warning) => `<div class="warning-item">${escapeHtml(warning)}</div>`).join('')}</div>`
-        : '';
-      const confirmNotes = summary.confirmNotes.length
-        ? `
-          <h3>要確認メモ</h3>
-          <div class="warning-list">
-            ${summary.confirmNotes.map((note) => `<div class="warning-item">${escapeHtml(note)}</div>`).join('')}
-          </div>
-        `
-        : '';
-
-      $('summaryResult').innerHTML = `
-        ${warnings}
-        <div class="summary-compact">
-          ${summaryRow('対象月', summary.monthLabel)}
-          ${summaryRow('通常コマ数', summary.normalKoma)}
-          ${summaryRow('キャンプ10時コマ数', summary.camp10Koma)}
-          ${summaryRow('レッスン合計コマ数', summary.lessonTotalKoma)}
-          ${summaryRow('要確認コマ数', summary.otherConfirmKoma)}
-          ${summaryRow('教材開発時間', summary.workHours['教材開発'])}
-          ${summaryRow('SNS時間', summary.workHours.SNS)}
-          ${summaryRow('研修時間', summary.workHours['研修'])}
-          ${summaryRow('その他MTGなど時間', summary.workHours['その他MTGなど'])}
-          ${summaryRow('講師外業務合計時間', summary.workTotalHours)}
-          ${summaryRow('終了漏れ件数', summary.unfinishedCount)}
-          ${summaryRow('未分類件数', summary.unclassifiedCount)}
-        </div>
-        ${confirmNotes}
-      `;
-      $('summaryResult').classList.remove('hidden');
-      $('copyText').classList.add('hidden');
-      $('copyText').value = '';
-    }
-
-    function summaryRow(label, value) {
-      return `
-        <div class="summary-row">
-          <div class="summary-label">${escapeHtml(label)}</div>
-          <div class="summary-value">${escapeHtml(value)}</div>
-        </div>
-      `;
-    }
-
-    async function createCopyText() {
-      if (!state.summary) return;
-      const text = buildCopyText(state.summary);
-      $('copyText').value = text;
-      $('copyText').classList.remove('hidden');
-
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast('コピー用テキストを作成してコピーしました');
-      } catch (error) {
-        $('copyText').focus();
-        $('copyText').select();
-        showToast('コピー用テキストを作成しました 必要に応じて選択してコピーしてください');
-      }
-    }
-
-    function buildCopyText(summary) {
-      const details = summary.details.length
-        ? summary.details.map((detail) => `${detail.shortDate} ${detail.start}-${detail.end} ${detail.content}`)
-        : ['（なし）'];
-      return [
-        '講師外業務詳細',
-        ...details,
-      ].join('\n');
-    }
-
-    function renderQuickButtons(containerId, items, onClick) {
-      const container = $(containerId);
-      container.innerHTML = items.map((item) => `<button type="button" class="quick-button">${escapeHtml(item)}</button>`).join('');
-      container.querySelectorAll('button').forEach((button) => {
-        button.addEventListener('click', () => onClick(button.textContent));
-      });
-    }
-
-    function fillSelect(select, values, includeBlank = false, blankLabel = '未選択') {
-      const options = includeBlank ? [''].concat(values) : values;
-      select.innerHTML = options.map((value) => {
-        const label = value || blankLabel;
-        return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
-      }).join('');
-    }
-
-    const LOCAL_STORAGE_KEY = 'kintai_logs_pc_test_v1';
-    const LOCAL_QUICK_ITEMS_KEY = 'kintai_work_quick_items_v1';
-    const DEFAULT_WORK_QUICK_ITEMS = ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務', 'UL面談', '模擬レッスン'];
-
-    const localApi = {
-      getInitialData() {
-        const today = new Date();
-        return {
-          todayIso: toDateIso(today),
-          todayDisplay: toJapaneseDate(today),
-          currentMonth: toMonthValue(today),
-          lessonCategories: ['通常コマ', 'キャンプ10時', 'その他・要確認'],
-          workCategories: ['教材開発', 'SNS', '研修', 'その他MTGなど'],
-          lessonContentOptions: LESSON_CONTENT_OPTIONS,
-          lessonItemOptions: LESSON_CONTENT_OPTIONS,
-          workQuickItems: localReadQuickItems(),
-          activeWork: localFindActiveWork(),
-          recentLogs: localGetRecentLogs(),
-        };
-      },
-
-      saveWorkQuickItems(items) {
-        const normalized = normalizeQuickItemsClient(items);
-        localStorage.setItem(LOCAL_QUICK_ITEMS_KEY, JSON.stringify(normalized));
-        return {
-          ok: true,
-          message: 'よく使う内容を保存しました（PCテスト）',
-          workQuickItems: normalized,
-        };
-      },
-
-      saveLesson(payload) {
-        const logs = localReadLogs();
-        const dateIso = payload.date || toDateIso(new Date());
-        const lessonItems = Array.isArray(payload.lessonItems)
-          ? payload.lessonItems.map(normalizeLessonContentClient)
-          : [];
-        const category = getLocalLessonCategoryByItems(lessonItems);
-        const koma = Number(payload.koma || 1);
-        const note = String(payload.note || '').trim();
-        const content = lessonItems.join(' / ');
-        const now = new Date();
-        logs.push({
-          id: localCreateId(),
-          type: 'レッスン',
-          dateIso,
-          dateDisplay: displayDateFromIso(dateIso),
-          month: dateIso.slice(0, 7),
-          start: '',
-          end: '',
-          content,
-          category,
-          koma,
-          minutes: '',
-          hours: '',
-          note,
-          createdDisplay: toDateTimeDisplay(now),
-          updatedDisplay: toDateTimeDisplay(now),
-          sortTime: now.getTime(),
-          isActive: false,
-        });
-        localWriteLogs(logs);
-        return {
-          ok: true,
-          message: 'レッスンを保存しました（PCテスト）',
-          activeWork: localFindActiveWork(),
-          recentLogs: localGetRecentLogs(),
-        };
-      },
-
-      startWork(payload) {
-        const logs = localReadLogs();
-        if (localFindActiveWork(logs)) {
-          throw new Error('未終了の講師外業務があるため、先に退勤してください');
-        }
-
-        const content = String(payload && payload.content || '').trim();
-        if (!content) {
-          throw new Error('出勤時に内容を入力してください');
-        }
-
-        const now = new Date();
-        const dateIso = toDateIso(now);
-        logs.push({
-          id: localCreateId(),
-          type: '講師外業務',
-          dateIso,
-          dateDisplay: displayDateFromIso(dateIso),
-          month: dateIso.slice(0, 7),
-          start: toTimeText(now),
-          end: '',
-          content,
-          category: payload.category || 'その他MTGなど',
-          koma: '',
-          minutes: '',
-          hours: '',
-          note: String(payload.note || ''),
-          createdDisplay: toDateTimeDisplay(now),
-          updatedDisplay: toDateTimeDisplay(now),
-          sortTime: now.getTime(),
-          isActive: true,
-        });
-        localWriteLogs(logs);
-        return {
-          ok: true,
-          message: '出勤しました（PCテスト）',
-          activeWork: localFindActiveWork(),
-          recentLogs: localGetRecentLogs(),
-        };
-      },
-
-      finishWork() {
-        const logs = localReadLogs();
-        const active = localFindActiveWork(logs);
-        if (!active) {
-          throw new Error('開始中の講師外業務がありません');
-        }
-
-        const now = new Date();
-        const startAt = new Date(`${active.dateIso}T${active.start}:00`);
-        let minutes = Math.round((now.getTime() - startAt.getTime()) / 60000);
-        if (minutes < 0) {
-          minutes += 24 * 60;
-        }
-        active.end = toTimeText(now);
-        active.minutes = minutes;
-        active.hours = roundHoursClient(minutes).toFixed(2);
-        active.isActive = false;
-        active.updatedDisplay = toDateTimeDisplay(now);
-        active.sortTime = now.getTime();
-        localWriteLogs(logs);
-        return {
-          ok: true,
-          message: '退勤しました（PCテスト）',
-          activeWork: localFindActiveWork(),
-          recentLogs: localGetRecentLogs(),
-        };
-      },
-
-      cancelActiveWork() {
-        const logs = localReadLogs();
-        const active = localFindActiveWork(logs);
-        if (!active) {
-          throw new Error('取り消せる未退勤の出勤がありません');
-        }
-        localWriteLogs(logs.filter((log) => log.id !== active.id));
-        return {
-          ok: true,
-          message: '出勤を取り消しました（PCテスト）',
-          activeWork: localFindActiveWork(),
-          recentLogs: localGetRecentLogs(),
-        };
-      },
-
-      prepareFinishWork() {
-        const now = new Date();
-        return {
-          endIso: `${toDateIso(now)}T${toTimeText(now)}:00`,
-          endDisplay: `${displayDateFromIso(toDateIso(now))} ${toTimeText(now)}`,
-        };
-      },
-
-      getMonthlySummary(month) {
-        return buildLocalMonthlySummary(month);
-      },
-    };
 
     function hasAppsScript() {
       return typeof google !== 'undefined' && google.script && google.script.run;
@@ -1683,16 +1736,259 @@
       });
     }
 
+    const localApi = {
+      getInitialData() {
+        const today = new Date();
+        return {
+          todayIso: toDateIso(today),
+          todayDisplay: toJapaneseDate(today),
+          currentMonth: toMonthValue(today),
+          lessonCategories: LESSON_CATEGORIES.slice(),
+          workCategories: WORK_CATEGORIES.slice(),
+          lessonContentOptions: LESSON_CONTENT_OPTIONS.slice(),
+          lessonItemOptions: LESSON_CONTENT_OPTIONS.slice(),
+          workQuickItems: localReadQuickItems(),
+          activeWork: localFindActiveWork(),
+          recentLogs: localGetRecentLogs(),
+        };
+      },
+
+      saveWorkQuickItems(items) {
+        const normalized = normalizeQuickItemsClient(items);
+        localStorage.setItem(LOCAL_QUICK_ITEMS_KEY, JSON.stringify(normalized));
+        return {
+          ok: true,
+          message: 'よく使う内容を保存しました（PCテスト）',
+          workQuickItems: normalized,
+        };
+      },
+
+      saveLesson(payload) {
+        const logs = localReadLogs();
+        const dateIso = payload.date || toDateIso(new Date());
+        const lessonItems = normalizeLessonItemsClient(payload.lessonItems || []);
+        const koma = Number(payload.koma || lessonItems.length);
+        validateLessonPayload(koma, lessonItems);
+        const now = new Date();
+        logs.push(normalizeLocalLog({
+          id: localCreateId(),
+          type: 'レッスン',
+          dateIso,
+          start: '',
+          end: '',
+          content: lessonItems.join(' / '),
+          category: getLocalLessonCategoryByItems(lessonItems),
+          koma,
+          minutes: '',
+          hours: '',
+          note: String(payload.note || '').trim(),
+          createdDisplay: toDateTimeDisplay(now),
+          updatedDisplay: toDateTimeDisplay(now),
+          sortTime: now.getTime(),
+          isActive: false,
+        }));
+        localWriteLogs(logs);
+        return localMutationResult('レッスンを保存しました（PCテスト）');
+      },
+
+      startWork(payload) {
+        const logs = localReadLogs();
+        if (localFindActiveWork(logs)) {
+          throw new Error('未終了の講師外業務があるため、先に退勤してください');
+        }
+        const content = String(payload && payload.content || '').trim();
+        if (!content) {
+          throw new Error('出勤時に内容を入力してください');
+        }
+        const category = WORK_CATEGORIES.includes(payload.category) ? payload.category : 'その他MTGなど';
+        const now = new Date();
+        logs.push(normalizeLocalLog({
+          id: localCreateId(),
+          type: '講師外業務',
+          dateIso: toDateIso(now),
+          start: toTimeText(now),
+          end: '',
+          content,
+          category,
+          koma: '',
+          minutes: '',
+          hours: '',
+          note: String(payload.note || '').trim(),
+          createdDisplay: toDateTimeDisplay(now),
+          updatedDisplay: toDateTimeDisplay(now),
+          sortTime: now.getTime(),
+          isActive: true,
+        }));
+        localWriteLogs(logs);
+        return localMutationResult('出勤しました（PCテスト）');
+      },
+
+      finishWork() {
+        const logs = localReadLogs();
+        const active = localFindActiveWork(logs);
+        if (!active) {
+          throw new Error('開始中の講師外業務がありません');
+        }
+        const now = new Date();
+        active.end = toTimeText(now);
+        active.minutes = calculateWorkMinutes(active.dateIso, active.start, active.end) || 0;
+        active.hours = roundHoursClient(active.minutes).toFixed(2);
+        active.isActive = false;
+        active.updatedDisplay = toDateTimeDisplay(now);
+        active.sortTime = now.getTime();
+        localWriteLogs(logs);
+        return localMutationResult('退勤しました（PCテスト）');
+      },
+
+      cancelActiveWork() {
+        const logs = localReadLogs();
+        const active = localFindActiveWork(logs);
+        if (!active) {
+          throw new Error('取り消せる未退勤の出勤がありません');
+        }
+        localWriteLogs(logs.filter((log) => log.id !== active.id));
+        return localMutationResult('出勤を取り消しました（PCテスト）');
+      },
+
+      getLogsByMonth(month) {
+        validateMonth(month);
+        return localReadLogs()
+          .filter((log) => log.month === month)
+          .sort(sortLogsForHistory)
+          .map(cloneLog);
+      },
+
+      getMonthlySummary(month) {
+        return buildLocalMonthlySummary(month);
+      },
+
+      updateLog(payload) {
+        const logs = localReadLogs();
+        const log = logs.find((item) => String(item.id) === String(payload.id));
+        if (!log) {
+          throw new Error('編集対象のログが見つかりません');
+        }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.date || '')) {
+          throw new Error('日付を入力してください');
+        }
+        const now = new Date();
+        if (log.type === 'レッスン') {
+          const lessonItems = normalizeLessonItemsClient(payload.lessonItems || []);
+          const koma = Number(payload.koma || lessonItems.length);
+          validateLessonPayload(koma, lessonItems);
+          log.dateIso = payload.date;
+          log.content = lessonItems.join(' / ');
+          log.category = getLocalLessonCategoryByItems(lessonItems);
+          log.koma = koma;
+          log.minutes = '';
+          log.hours = '';
+          log.note = String(payload.note || '').trim();
+        } else {
+          const start = normalizeTimeTextClient(payload.start);
+          const end = normalizeTimeTextClient(payload.end);
+          const content = String(payload.content || '').trim();
+          const category = payload.category || '';
+          if (!start) throw new Error('開始時刻を入力してください');
+          if (end && (!content || !WORK_CATEGORIES.includes(category))) {
+            throw new Error('終了済みの講師外業務は内容と分類を入力してください');
+          }
+          log.dateIso = payload.date;
+          log.start = start;
+          log.end = end;
+          log.content = content;
+          log.category = category;
+          log.koma = '';
+          log.note = String(payload.note || '').trim();
+          log.isActive = Boolean(start && !end);
+          if (end) {
+            const minutes = calculateWorkMinutes(log.dateIso, start, end);
+            if (minutes === null) throw new Error('勤務時間を計算できませんでした');
+            log.minutes = minutes;
+            log.hours = roundHoursClient(minutes).toFixed(2);
+          } else {
+            log.minutes = '';
+            log.hours = '';
+          }
+        }
+        log.dateDisplay = displayDateFromIso(log.dateIso);
+        log.month = log.dateIso.slice(0, 7);
+        log.updatedDisplay = toDateTimeDisplay(now);
+        log.sortTime = now.getTime();
+        localWriteLogs(logs.map(normalizeLocalLog));
+        return localMutationResult('ログを更新しました（PCテスト）');
+      },
+
+      deleteLog(id) {
+        const logs = localReadLogs();
+        const nextLogs = logs.filter((log) => String(log.id) !== String(id));
+        if (nextLogs.length === logs.length) {
+          throw new Error('削除対象のログが見つかりません');
+        }
+        localWriteLogs(nextLogs);
+        return localMutationResult('ログを削除しました（PCテスト）');
+      },
+    };
+
+    function localMutationResult(message) {
+      return {
+        ok: true,
+        message,
+        activeWork: localFindActiveWork(),
+        recentLogs: localGetRecentLogs(),
+      };
+    }
+
     function localReadLogs() {
       try {
-        return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '[]');
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed.map(normalizeLocalLog).filter((log) => log.id) : [];
       } catch (error) {
         return [];
       }
     }
 
     function localWriteLogs(logs) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(logs));
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(logs.map(normalizeLocalLog)));
+    }
+
+    function normalizeLocalLog(log) {
+      const dateIso = log.dateIso || isoFromDisplayDate(log.dateDisplay) || toDateIso(new Date());
+      const start = normalizeTimeTextClient(log.start);
+      const end = normalizeTimeTextClient(log.end);
+      const normalized = Object.assign({}, log, {
+        id: String(log.id || ''),
+        type: log.type || '講師外業務',
+        dateIso,
+        dateDisplay: displayDateFromIso(dateIso),
+        month: dateIso.slice(0, 7),
+        start,
+        end,
+        content: String(log.content || ''),
+        category: String(log.category || ''),
+        koma: log.koma === '' ? '' : Number(log.koma || 0),
+        minutes: log.minutes === '' || typeof log.minutes === 'undefined' ? '' : Number(log.minutes || 0),
+        hours: log.hours === '' || typeof log.hours === 'undefined' ? '' : Number(log.hours || 0).toFixed(2),
+        note: String(log.note || ''),
+        isActive: log.type === '講師外業務' && Boolean(start && !end),
+        sortTime: Number(log.sortTime || 0),
+      });
+      normalized.lessonItems = normalized.type === 'レッスン' ? getLogLessonItems(normalized) : [];
+      return normalized;
+    }
+
+    function localReadQuickItems() {
+      try {
+        const stored = localStorage.getItem(LOCAL_QUICK_ITEMS_KEY);
+        if (stored === null) return DEFAULT_WORK_QUICK_ITEMS.slice();
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? normalizeQuickItemsClient(parsed) : DEFAULT_WORK_QUICK_ITEMS.slice();
+      } catch (error) {
+        return DEFAULT_WORK_QUICK_ITEMS.slice();
+      }
+    }
+
+    function localFindActiveWork(logs = localReadLogs()) {
+      return logs.find((log) => log.type === '講師外業務' && log.start && !log.end) || null;
     }
 
     function localGetRecentLogs(logs = localReadLogs()) {
@@ -1702,85 +1998,12 @@
         .slice(0, 5);
     }
 
-    function localReadQuickItems() {
-      try {
-        const stored = localStorage.getItem(LOCAL_QUICK_ITEMS_KEY);
-        if (stored === null) {
-          return DEFAULT_WORK_QUICK_ITEMS.slice();
-        }
-        const parsed = JSON.parse(stored);
-        return Array.isArray(parsed) ? normalizeQuickItemsClient(parsed) : DEFAULT_WORK_QUICK_ITEMS.slice();
-      } catch (error) {
-        return DEFAULT_WORK_QUICK_ITEMS.slice();
-      }
-    }
-
-    function normalizeQuickItemsClient(items) {
-      const seen = new Set();
-      return (Array.isArray(items) ? items : [])
-        .map((item) => String(item || '').trim().slice(0, 40))
-        .filter((item) => {
-          if (!item || seen.has(item)) return false;
-          seen.add(item);
-          return true;
-        })
-        .slice(0, 6);
-    }
-
-    function localFindActiveWork(logs = localReadLogs()) {
-      return logs.find((log) => log.type === '講師外業務' && !log.end) || null;
-    }
-
-    function getLocalLessonCategoryByItems(items) {
-      const categories = items.map(getLessonBillingCategoryClient);
-      if (categories.some((category) => category === 'その他・要確認')) {
-        return 'その他・要確認';
-      }
-      const hasCamp10 = categories.some((category) => category === 'キャンプ10時');
-      const hasNormal = categories.some((category) => category === '通常コマ');
-      if (hasCamp10 && !hasNormal) {
-        return 'キャンプ10時';
-      }
-      return '通常コマ';
-    }
-
-    function normalizeLessonContentClient(value) {
-      const text = String(value || '').trim();
-      const normalized = LESSON_CONTENT_ALIASES[text] || text;
-      return LESSON_CONTENT_OPTIONS.includes(normalized) ? normalized : '';
-    }
-
-    function getLessonBillingCategoryClient(content) {
-      const normalized = normalizeLessonContentClient(content);
-      return LESSON_BILLING_RULES[normalized] || 'その他・要確認';
-    }
-
-    function extractLessonContentsClient(log) {
-      const expectedKoma = Number(log.koma || 0);
-      const values = String(log.content || '')
-        .split('/')
-        .map((item) => normalizeLessonContentClient(item))
-        .filter(Boolean);
-
-      if (values.length) return expectedKoma > 0 ? values.slice(0, expectedKoma) : values;
-
-      if (log.category) {
-        const fallback = getFallbackLessonContentClient(log.category);
-        return Array.from({ length: expectedKoma }, () => fallback);
-      }
-      return [];
-    }
-
-    function getFallbackLessonContentClient(category) {
-      if (category === 'キャンプ10時') return 'キャンプ10時';
-      if (category === 'その他・要確認') return 'その他・要確認';
-      return 'CB';
+    function localCreateId() {
+      return `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
     }
 
     function buildLocalMonthlySummary(month) {
-      if (!/^\d{4}-\d{2}$/.test(month || '')) {
-        throw new Error('対象月を選択してください');
-      }
+      validateMonth(month);
       const monthLabel = `${Number(month.slice(0, 4))}年${Number(month.slice(5, 7))}月`;
       const summary = {
         month,
@@ -1803,10 +2026,10 @@
 
       localReadLogs().filter((log) => log.month === month).forEach((log) => {
         if (log.type === 'レッスン') {
-          const contents = extractLessonContentsClient(log);
+          const contents = getLogLessonItems(log);
           if (!contents.length) {
             summary.unclassifiedCount += 1;
-            summary.confirmNotes.push(`未分類: ${log.dateDisplay} ${log.content || '内容なし'}`);
+            summary.confirmNotes.push(`未分類: ${log.dateDisplay} レッスン ${log.content || '内容なし'}`);
             return;
           }
           contents.forEach((content) => {
@@ -1815,40 +2038,38 @@
               summary.normalKoma += 1;
             } else if (category === 'キャンプ10時') {
               summary.camp10Koma += 1;
-            } else if (category === 'その他・要確認') {
+            } else {
               summary.otherConfirmKoma += 1;
               summary.otherConfirmCount += 1;
-              summary.confirmNotes.push(`その他・要確認: ${log.dateDisplay} ${content}`);
+              summary.confirmNotes.push(`その他・要確認: ${log.dateDisplay} ${content}${log.note ? ` / メモ: ${log.note}` : ''}`);
             }
           });
           return;
         }
 
-        if (log.type === '講師外業務') {
-          if (!log.end) {
-            summary.unfinishedCount += 1;
-            summary.confirmNotes.push(`終了漏れ: ${log.dateDisplay} ${log.start}開始 ${log.content || '内容なし'}`);
-            return;
-          }
-          if (!summary.workMinutes.hasOwnProperty(log.category)) {
-            summary.unclassifiedCount += 1;
-            summary.confirmNotes.push(`未分類: ${log.dateDisplay} ${log.content || '内容なし'}`);
-            return;
-          }
-          const minutes = Number(log.minutes || 0);
-          summary.workMinutes[log.category] += minutes;
-          summary.details.push({
-            date: log.dateDisplay,
-            shortDate: shortDateFromIso(log.dateIso),
-            start: log.start,
-            end: log.end,
-            content: log.content,
-            category: log.category,
-            minutes,
-            hours: roundHoursClient(minutes).toFixed(2),
-            note: log.note || '',
-          });
+        if (!log.end) {
+          summary.unfinishedCount += 1;
+          summary.confirmNotes.push(`終了漏れ: ${log.dateDisplay} ${log.start || '--:--'}開始 ${log.content || '内容未入力'}`);
+          return;
         }
+        if (!WORK_CATEGORIES.includes(log.category)) {
+          summary.unclassifiedCount += 1;
+          summary.confirmNotes.push(`未分類: ${log.dateDisplay} 講師外業務 ${log.content || '内容なし'}`);
+          return;
+        }
+        const minutes = getLogMinutes(log);
+        summary.workMinutes[log.category] += minutes;
+        summary.details.push({
+          date: log.dateDisplay,
+          shortDate: shortDateFromIso(log.dateIso),
+          start: log.start,
+          end: log.end,
+          content: log.content,
+          category: log.category,
+          minutes,
+          hours: roundHoursClient(minutes).toFixed(2),
+          note: log.note || '',
+        });
       });
 
       summary.lessonTotalKoma = summary.normalKoma + summary.camp10Koma;
@@ -1858,15 +2079,204 @@
         summary.workHours[category] = roundHoursClient(minutes).toFixed(2);
       });
       summary.workTotalHours = roundHoursClient(summary.workTotalMinutes).toFixed(2);
-
-      if (summary.otherConfirmCount > 0) summary.warnings.push('その他・要確認のレッスンがあります 内容を確認してください');
-      if (summary.unfinishedCount > 0) summary.warnings.push('終了漏れの講師外業務があります 勤怠ログを確認してください');
-      if (summary.unclassifiedCount > 0) summary.warnings.push('未分類のログがあります 分類を確認してください');
+      if (summary.otherConfirmCount > 0) summary.warnings.push('その他・要確認のレッスンがあります。内容を確認してください。');
+      if (summary.unfinishedCount > 0) summary.warnings.push('終了漏れの講師外業務があります。勤怠ログを確認してください。');
+      if (summary.unclassifiedCount > 0) summary.warnings.push('未分類のログがあります。分類を確認してください。');
       return summary;
     }
 
-    function localCreateId() {
-      return `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    function fillSelect(select, values) {
+      clear(select);
+      values.forEach((value) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+    }
+
+    function groupLogsByDate(logs) {
+      const groups = [];
+      const byDate = new Map();
+      logs.forEach((log) => {
+        const key = log.dateIso || log.dateDisplay || '';
+        if (!byDate.has(key)) {
+          const group = { dateIso: log.dateIso, dateDisplay: log.dateDisplay, logs: [] };
+          byDate.set(key, group);
+          groups.push(group);
+        }
+        byDate.get(key).logs.push(log);
+      });
+      return groups;
+    }
+
+    function sortLogsForHistory(a, b) {
+      const dateCompare = String(b.dateIso || '').localeCompare(String(a.dateIso || ''));
+      if (dateCompare !== 0) return dateCompare;
+      return getLogSortMinutes(b) - getLogSortMinutes(a) || Number(b.sortTime || 0) - Number(a.sortTime || 0);
+    }
+
+    function getLogSortMinutes(log) {
+      const time = normalizeTimeTextClient(log.start || log.end || '');
+      if (!time) return -1;
+      const [hour, minute] = time.split(':').map(Number);
+      return hour * 60 + minute;
+    }
+
+    function getLogLessonItems(log) {
+      if (Array.isArray(log.lessonItems) && log.lessonItems.length) {
+        return log.lessonItems.map(normalizeLessonContentClient).filter(Boolean).slice(0, clampKoma(log.koma || log.lessonItems.length));
+      }
+      const expected = clampKoma(log.koma || 1);
+      const values = String(log.content || '')
+        .split('/')
+        .map((item) => normalizeLessonContentClient(item))
+        .filter(Boolean);
+      if (values.length) return values.slice(0, expected);
+      const fallback = log.category === 'キャンプ10時'
+        ? 'キャンプ10時'
+        : log.category === 'その他・要確認'
+          ? 'その他・要確認'
+          : 'CB';
+      return Array.from({ length: expected }, () => fallback);
+    }
+
+    function getLogMinutes(log) {
+      if (log.minutes !== '' && typeof log.minutes !== 'undefined' && !Number.isNaN(Number(log.minutes))) {
+        return Number(log.minutes);
+      }
+      return calculateWorkMinutes(log.dateIso, log.start, log.end) || 0;
+    }
+
+    function calculateWorkMinutes(dateIso, start, end) {
+      if (!dateIso || !start || !end) return null;
+      const startAt = buildClientDateTime(dateIso, start);
+      const endAt = buildClientDateTime(dateIso, end);
+      if (!startAt || !endAt) return null;
+      if (endAt.getTime() < startAt.getTime()) {
+        endAt.setDate(endAt.getDate() + 1);
+      }
+      return Math.round((endAt.getTime() - startAt.getTime()) / 60000);
+    }
+
+    function buildClientDateTime(dateIso, timeText) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso || '') || !normalizeTimeTextClient(timeText)) {
+        return null;
+      }
+      const [year, month, day] = dateIso.split('-').map(Number);
+      const [hour, minute] = normalizeTimeTextClient(timeText).split(':').map(Number);
+      return new Date(year, month - 1, day, hour, minute, 0, 0);
+    }
+
+    function validateLessonPayload(koma, lessonItems) {
+      if (!koma || koma < 1 || koma > 4) {
+        throw new Error('コマ数は1から4の範囲で選んでください');
+      }
+      if (!Array.isArray(lessonItems) || lessonItems.length !== koma || lessonItems.some((item) => !item)) {
+        throw new Error('コマ数とコマ内容の数が一致していません');
+      }
+    }
+
+    function validateMonth(month) {
+      if (!/^\d{4}-\d{2}$/.test(month || '')) {
+        throw new Error('対象月を選択してください');
+      }
+    }
+
+    function normalizeLessonItemsClient(items) {
+      return (Array.isArray(items) ? items : []).map(normalizeLessonContentClient).filter(Boolean);
+    }
+
+    function normalizeLessonContentClient(value) {
+      const text = String(value || '').trim();
+      const normalized = LESSON_CONTENT_ALIASES[text] || text;
+      return LESSON_CONTENT_OPTIONS.includes(normalized) ? normalized : '';
+    }
+
+    function getLessonBillingCategoryClient(content) {
+      const normalized = normalizeLessonContentClient(content);
+      return LESSON_BILLING_RULES[normalized] || 'その他・要確認';
+    }
+
+    function getLocalLessonCategoryByItems(items) {
+      const categories = items.map(getLessonBillingCategoryClient);
+      if (categories.some((category) => category === 'その他・要確認')) return 'その他・要確認';
+      const hasCamp10 = categories.some((category) => category === 'キャンプ10時');
+      const hasNormal = categories.some((category) => category === '通常コマ');
+      return hasCamp10 && !hasNormal ? 'キャンプ10時' : '通常コマ';
+    }
+
+    function normalizeQuickItemsClient(items) {
+      const seen = new Set();
+      return (Array.isArray(items) ? items : [])
+        .map((item) => String(item || '').trim().slice(0, 40))
+        .filter((item) => {
+          if (!item || seen.has(item)) return false;
+          seen.add(item);
+          return true;
+        })
+        .slice(0, 6);
+    }
+
+    function normalizeTimeTextClient(value) {
+      const match = String(value || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+      if (!match) return '';
+      const hour = Number(match[1]);
+      const minute = Number(match[2]);
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return '';
+      return `${pad2(hour)}:${pad2(minute)}`;
+    }
+
+    function formatElapsed(seconds) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      return `${pad2(hours)}:${pad2(minutes)}:${pad2(secs)}`;
+    }
+
+    function formatDuration(minutes) {
+      const value = Math.max(0, Number(minutes || 0));
+      const hours = Math.floor(value / 60);
+      const mins = value % 60;
+      if (hours && mins) return `${hours}時間${mins}分`;
+      if (hours) return `${hours}時間`;
+      return `${mins}分`;
+    }
+
+    function formatHoursLabel(hours) {
+      const minutes = Math.round(Number(hours || 0) * 60);
+      return formatDuration(minutes);
+    }
+
+    function formatDateHeading(dateIso, fallback) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso || '')) return fallback || '';
+      const [year, month, day] = dateIso.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+      return `${month}月${day}日 ${weekdays[date.getDay()]}曜日`;
+    }
+
+    function addWeekdayToDisplay(dateIso, display) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso || '')) return display || '';
+      const [year, month, day] = dateIso.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+      return `${month}月${day}日 ${weekdays[date.getDay()]}曜日`;
+    }
+
+    function getSummaryConfirmCount(summary) {
+      return Number(summary.unclassifiedCount || 0) + Number(summary.unfinishedCount || 0) + Number(summary.otherConfirmCount || 0);
+    }
+
+    function clampKoma(value) {
+      const number = Number(value || 1);
+      if (number < 1) return 1;
+      if (number > 4) return 4;
+      return number;
+    }
+
+    function cloneLog(log) {
+      return JSON.parse(JSON.stringify(log || {}));
     }
 
     function toDateIso(date) {
@@ -1886,13 +2296,19 @@
     }
 
     function displayDateFromIso(dateIso) {
-      const [year, month, day] = dateIso.split('-');
-      return `${year}/${month}/${day}`;
+      const [year, month, day] = String(dateIso || '').split('-');
+      return year && month && day ? `${year}/${month}/${day}` : '';
+    }
+
+    function isoFromDisplayDate(display) {
+      const match = String(display || '').match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+      if (!match) return '';
+      return `${match[1]}-${pad2(match[2])}-${pad2(match[3])}`;
     }
 
     function shortDateFromIso(dateIso) {
-      const [, month, day] = dateIso.split('-');
-      return `${Number(month)}/${Number(day)}`;
+      const [, month, day] = String(dateIso || '').split('-');
+      return month && day ? `${Number(month)}/${Number(day)}` : '';
     }
 
     function toTimeText(date) {
@@ -1907,13 +2323,23 @@
       return Math.round((Number(minutes || 0) / 60) * 100) / 100;
     }
 
+    function capitalize(value) {
+      return String(value || '').charAt(0).toUpperCase() + String(value || '').slice(1);
+    }
+
+    function chevronIcon() {
+      const span = createEl('span', { className: 'chevron-icon', ariaHidden: 'true' });
+      span.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"></path></svg>';
+      return span;
+    }
+
     function setBusy(isBusy) {
-      document.querySelectorAll('button').forEach((button) => {
-        button.disabled = isBusy || button.dataset.keepEnabled === 'true';
+      state.busy = isBusy;
+      document.querySelectorAll('button:not([data-tab])').forEach((button) => {
+        if (button.id === 'saveEditButton' || button.id === 'cancelEditButton' || button.id === 'deleteLogButton') return;
+        button.disabled = isBusy;
       });
-      if (!isBusy) {
-        $('copyTextButton').disabled = !state.summary;
-      }
+      $('copyTextButton').disabled = isBusy || !state.summary;
     }
 
     function showToast(message, isError = false) {
@@ -1921,21 +2347,54 @@
       toast.textContent = message;
       toast.classList.toggle('error', isError);
       toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 4200);
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 3800);
     }
 
     function showError(error) {
-      const message = error && error.message ? error.message.replace(/^Exception:\s*/, '') : String(error);
-      showToast(message || 'エラーが発生しました', true);
+      showToast(formatError(error), true);
     }
 
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    function formatError(error) {
+      return (error && error.message ? error.message : String(error || 'エラーが発生しました')).replace(/^Exception:\s*/, '');
+    }
+
+    function createEl(tagName, attrs = {}, children = []) {
+      const element = document.createElement(tagName);
+      Object.entries(attrs || {}).forEach(([key, value]) => {
+        if (value === null || typeof value === 'undefined') return;
+        if (key === 'className') {
+          element.className = value;
+        } else if (key === 'htmlFor') {
+          element.htmlFor = value;
+        } else if (key === 'ariaLabel') {
+          element.setAttribute('aria-label', value);
+        } else if (key === 'ariaHidden') {
+          element.setAttribute('aria-hidden', String(value));
+        } else if (key === 'style') {
+          element.setAttribute('style', value);
+        } else if (key in element) {
+          element[key] = value;
+        } else {
+          element.setAttribute(key, value);
+        }
+      });
+      const childList = Array.isArray(children) ? children : [children];
+      childList.forEach((child) => {
+        if (child === null || typeof child === 'undefined') return;
+        if (typeof child === 'string' || typeof child === 'number') {
+          element.appendChild(document.createTextNode(String(child)));
+        } else {
+          element.appendChild(child);
+        }
+      });
+      return element;
+    }
+
+    function clear(element) {
+      while (element && element.firstChild) {
+        element.removeChild(element.firstChild);
+      }
     }
 
     function $(id) {
