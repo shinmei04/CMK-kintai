@@ -24,7 +24,7 @@ const COURSE_CONFIG = {
     '振替': '通常コマ',
     '補講': '通常コマ',
     'キャンプ10時': 'キャンプ10時',
-    'キャンプその他': '通常コマ',
+    'キャンプその他': 'キャンプ10時',
     'その他・要確認': 'その他・要確認',
   },
   lessonContentLabels: {
@@ -78,6 +78,7 @@ const APP_CONFIG = {
   defaultWorkQuickItems: ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務'],
   maxWorkQuickItems: 4,
   lessonPayPerKoma: 2200,
+  campLessonPayPerKoma: 2350,
   workHourlyPay: 1300,
 };
 
@@ -508,12 +509,15 @@ function buildSalarySummary_(month) {
     month: target.monthValue,
     monthLabel: target.monthLabel,
     lessonKoma: 0,
+    normalLessonKoma: 0,
+    campLessonKoma: 0,
     workMinutes: 0,
     workHours: '0.00',
     lessonPay: 0,
     workPay: 0,
     totalPay: 0,
     lessonPayPerKoma: APP_CONFIG.lessonPayPerKoma,
+    campLessonPayPerKoma: APP_CONFIG.campLessonPayPerKoma,
     workHourlyPay: APP_CONFIG.workHourlyPay,
   };
 
@@ -523,7 +527,17 @@ function buildSalarySummary_(month) {
     }
 
     if (log.type === APP_CONFIG.lessonType) {
-      summary.lessonKoma += Number(log.koma || 0);
+      const contents = extractLessonContents_(log);
+      const count = contents.length || Number(log.koma || 0);
+      let campCount = 0;
+      contents.forEach(function (content) {
+        if (getLessonBillingCategory_(content) === 'キャンプ10時') {
+          campCount += 1;
+        }
+      });
+      summary.lessonKoma += count;
+      summary.campLessonKoma += campCount;
+      summary.normalLessonKoma += Math.max(0, count - campCount);
       return;
     }
 
@@ -544,7 +558,9 @@ function buildSalarySummary_(month) {
   });
 
   summary.workHours = roundHours_(summary.workMinutes).toFixed(2);
-  summary.lessonPay = summary.lessonKoma * APP_CONFIG.lessonPayPerKoma;
+  summary.lessonPay =
+    (summary.normalLessonKoma * APP_CONFIG.lessonPayPerKoma) +
+    (summary.campLessonKoma * APP_CONFIG.campLessonPayPerKoma);
   summary.workPay = Math.round(Number(summary.workHours) * APP_CONFIG.workHourlyPay);
   summary.totalPay = summary.lessonPay + summary.workPay;
   return summary;

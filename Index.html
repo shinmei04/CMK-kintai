@@ -1076,7 +1076,7 @@
       '振替': '通常コマ',
       '補講': '通常コマ',
       'キャンプ10時': 'キャンプ10時',
-      'キャンプその他': '通常コマ',
+      'キャンプその他': 'キャンプ10時',
       'その他・要確認': 'その他・要確認',
     };
     const LESSON_CONTENT_ALIASES = {
@@ -1089,6 +1089,7 @@
     const WORK_CATEGORIES = ['教材開発', 'SNS', '研修', 'その他MTGなど'];
     const LESSON_CATEGORIES = ['通常コマ', 'キャンプ10時', 'その他・要確認'];
     const LESSON_PAY_PER_KOMA = 2200;
+    const CAMP_LESSON_PAY_PER_KOMA = 2350;
     const WORK_HOURLY_PAY = 1300;
 
     const state = {
@@ -2316,18 +2317,26 @@
         month,
         monthLabel: `${Number(month.slice(0, 4))}年${Number(month.slice(5, 7))}月`,
         lessonKoma: 0,
+        normalLessonKoma: 0,
+        campLessonKoma: 0,
         workMinutes: 0,
         workHours: '0.00',
         lessonPay: 0,
         workPay: 0,
         totalPay: 0,
         lessonPayPerKoma: LESSON_PAY_PER_KOMA,
+        campLessonPayPerKoma: CAMP_LESSON_PAY_PER_KOMA,
         workHourlyPay: WORK_HOURLY_PAY,
       };
 
       localReadLogs().filter((log) => log.month === month).forEach((log) => {
         if (log.type === 'レッスン') {
-          summary.lessonKoma += Number(log.koma || 0);
+          const lessonItems = getLogLessonItems(log);
+          const count = lessonItems.length || Number(log.koma || 0);
+          const campCount = lessonItems.filter((item) => getLessonBillingCategoryClient(item) === 'キャンプ10時').length;
+          summary.lessonKoma += count;
+          summary.campLessonKoma += campCount;
+          summary.normalLessonKoma += Math.max(0, count - campCount);
           return;
         }
         if (log.type === '講師外業務' && log.end) {
@@ -2336,7 +2345,9 @@
       });
 
       summary.workHours = roundHoursClient(summary.workMinutes).toFixed(2);
-      summary.lessonPay = summary.lessonKoma * LESSON_PAY_PER_KOMA;
+      summary.lessonPay =
+        (summary.normalLessonKoma * LESSON_PAY_PER_KOMA) +
+        (summary.campLessonKoma * CAMP_LESSON_PAY_PER_KOMA);
       summary.workPay = Math.round(Number(summary.workHours) * WORK_HOURLY_PAY);
       summary.totalPay = summary.lessonPay + summary.workPay;
       return summary;
