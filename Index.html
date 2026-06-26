@@ -1107,6 +1107,10 @@
       startWorkContent: '',
       timerId: null,
       busy: false,
+      historyDirty: false,
+      summaryDirty: false,
+      historyLoadedMonth: '',
+      summaryLoadedMonth: '',
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1148,6 +1152,10 @@
         state.workCategories = data.workCategories || WORK_CATEGORIES.slice();
         state.workQuickItems = normalizeQuickItemsClient(data.workQuickItems || DEFAULT_WORK_QUICK_ITEMS);
         state.activeWork = data.activeWork || null;
+        state.historyLogs = Array.isArray(data.historyLogs) ? data.historyLogs : [];
+        state.summary = data.monthlySummary || null;
+        state.historyLoadedMonth = data.currentMonth;
+        state.summaryLoadedMonth = state.summary ? data.currentMonth : '';
 
         $('todayLabel').textContent = addWeekdayToDisplay(data.todayIso, data.todayDisplay);
         $('historyMonth').value = data.currentMonth;
@@ -1156,8 +1164,12 @@
 
         renderLessonItemRows();
         renderToday();
-        await loadHistoryMonth(data.currentMonth, { silent: true });
-        await loadMonthlySummary(data.currentMonth, { silent: true });
+        renderHistoryLogs();
+        if (state.summary) {
+          renderSummary(state.summary);
+        } else {
+          await loadMonthlySummary(data.currentMonth, { silent: true });
+        }
       } catch (error) {
         showError(error);
       } finally {
@@ -1165,16 +1177,21 @@
       }
     }
 
-    async function refreshAfterMutation(message) {
-      const data = await gas('getInitialData');
-      state.todayIso = data.todayIso;
-      state.currentMonth = data.currentMonth;
-      state.workQuickItems = normalizeQuickItemsClient(data.workQuickItems || state.workQuickItems);
-      state.activeWork = data.activeWork || null;
-      $('todayLabel').textContent = addWeekdayToDisplay(data.todayIso, data.todayDisplay);
+    async function refreshAfterMutation(result, fallbackMessage) {
+      if (result && Object.prototype.hasOwnProperty.call(result, 'activeWork')) {
+        state.activeWork = result.activeWork || null;
+      }
       renderToday();
-      await loadHistoryMonth($('historyMonth').value || data.currentMonth, { silent: true });
-      await loadMonthlySummary($('summaryMonth').value || data.currentMonth, { silent: true });
+      state.historyDirty = true;
+      state.summaryDirty = true;
+
+      if (state.currentTab === 'history') {
+        await loadHistoryMonth($('historyMonth').value || state.currentMonth, { silent: true });
+      } else if (state.currentTab === 'summary') {
+        await loadMonthlySummary($('summaryMonth').value || state.currentMonth, { silent: true });
+      }
+
+      const message = result && result.message ? result.message : fallbackMessage;
       if (message) {
         showToast(message);
       }
@@ -1190,11 +1207,13 @@
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
       });
-      if (tabName === 'history' && !state.historyLogs.length) {
-        loadHistoryMonth($('historyMonth').value || state.currentMonth);
+      const historyMonth = $('historyMonth').value || state.currentMonth;
+      const summaryMonth = $('summaryMonth').value || state.currentMonth;
+      if (tabName === 'history' && (state.historyDirty || state.historyLoadedMonth !== historyMonth)) {
+        loadHistoryMonth(historyMonth);
       }
-      if (tabName === 'summary' && !state.summary) {
-        loadMonthlySummary($('summaryMonth').value || state.currentMonth);
+      if (tabName === 'summary' && (state.summaryDirty || state.summaryLoadedMonth !== summaryMonth)) {
+        loadMonthlySummary(summaryMonth);
       }
     }
 
@@ -1371,7 +1390,7 @@
         setBusy(true);
         const result = await gas('startWork', payload);
         state.startWorkContent = '';
-        await refreshAfterMutation(result.message || '出勤しました');
+        await refreshAfterMutation(result, '出勤しました');
       } catch (error) {
         showError(error);
       } finally {
@@ -1384,7 +1403,7 @@
       try {
         setBusy(true);
         const result = await gas('finishWork');
-        await refreshAfterMutation(result.message || '退勤しました');
+        await refreshAfterMutation(result, '退勤しました');
       } catch (error) {
         showError(error);
       } finally {
@@ -1400,7 +1419,7 @@
       try {
         setBusy(true);
         const result = await gas('cancelActiveWork');
-        await refreshAfterMutation(result.message || '出勤を取り消しました');
+        await refreshAfterMutation(result, '出勤を取り消しました');
       } catch (error) {
         showError(error);
       } finally {
@@ -1429,7 +1448,7 @@
         const result = await gas('saveLesson', payload);
         $('lessonKoma').value = '1';
         renderLessonItemRows();
-        await refreshAfterMutation(result.message || '講師業務を登録しました');
+        await refreshAfterMutation(result, '講師業務を登録しました');
       } catch (error) {
         showError(error);
       } finally {
@@ -1472,6 +1491,8 @@
       try {
         if (!options.silent) setBusy(true);
         state.historyLogs = await gas('getLogsByMonth', month);
+        state.historyDirty = false;
+        state.historyLoadedMonth = month;
         renderHistoryLogs();
       } catch (error) {
         showError(error);
@@ -1536,6 +1557,8 @@
         if (!options.silent) setBusy(true);
         const summary = await gas('getMonthlySummary', month);
         state.summary = summary;
+        state.summaryDirty = false;
+        state.summaryLoadedMonth = month;
         renderSummary(summary);
       } catch (error) {
         showError(error);
@@ -1786,7 +1809,7 @@
         state.editingLog = null;
         $('editOverlay').classList.add('hidden');
         $('editOverlay').setAttribute('aria-hidden', 'true');
-        await refreshAfterMutation(result.message || '勤務実績を更新しました');
+        await refreshAfterMutation(result, '勤務実績を更新しました');
       } catch (error) {
         $('editSheetError').textContent = formatError(error);
       } finally {
@@ -1861,7 +1884,7 @@
         state.editingLog = null;
         $('editOverlay').classList.add('hidden');
         $('editOverlay').setAttribute('aria-hidden', 'true');
-        await refreshAfterMutation(result.message || '勤務実績を削除しました');
+        await refreshAfterMutation(result, '勤務実績を削除しました');
       } catch (error) {
         $('editSheetError').textContent = formatError(error);
       } finally {
@@ -1961,18 +1984,23 @@
     const localApi = {
       getInitialData() {
         const today = new Date();
+        const currentMonth = toMonthValue(today);
+        const logs = localReadLogs();
         return {
           todayIso: toDateIso(today),
           todayDisplay: toJapaneseDate(today),
-          currentMonth: toMonthValue(today),
+          currentMonth,
           lessonCategories: LESSON_CATEGORIES.slice(),
           workCategories: WORK_CATEGORIES.slice(),
           lessonContentOptions: LESSON_CONTENT_OPTIONS.slice(),
           lessonItemOptions: LESSON_CONTENT_OPTIONS.slice(),
           workQuickItems: localReadQuickItems(),
-          activeWork: localFindActiveWork(),
-          recentLogs: localGetRecentLogs(),
-          salarySummary: buildLocalSalarySummary(toMonthValue(today)),
+          activeWork: localFindActiveWork(logs),
+          historyLogs: logs
+            .filter((log) => log.month === currentMonth)
+            .sort(sortLogsForHistory)
+            .map(cloneLog),
+          monthlySummary: buildLocalMonthlySummary(currentMonth, logs),
         };
       },
 
@@ -2226,7 +2254,7 @@
       return `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
     }
 
-    function buildLocalMonthlySummary(month) {
+    function buildLocalMonthlySummary(month, sourceLogs = localReadLogs()) {
       validateMonth(month);
       const monthLabel = `${Number(month.slice(0, 4))}年${Number(month.slice(5, 7))}月`;
       const summary = {
@@ -2249,7 +2277,7 @@
         warnings: [],
       };
 
-      localReadLogs().filter((log) => log.month === month).forEach((log) => {
+      sourceLogs.filter((log) => log.month === month).forEach((log) => {
         if (log.type === 'レッスン') {
           const contents = getLogLessonItems(log);
           if (!contents.length) {
@@ -2306,14 +2334,14 @@
         summary.workHours[category] = roundHoursClient(minutes).toFixed(2);
       });
       summary.workTotalHours = roundHoursClient(summary.workTotalMinutes).toFixed(2);
-      summary.salarySummary = buildLocalSalarySummary(month);
+      summary.salarySummary = buildLocalSalarySummary(month, sourceLogs);
       if (summary.otherConfirmCount > 0) summary.warnings.push('その他・要確認のレッスンがあります。内容を確認してください。');
       if (summary.unfinishedCount > 0) summary.warnings.push('終了漏れの講師外業務があります。勤怠ログを確認してください。');
       if (summary.unclassifiedCount > 0) summary.warnings.push('未分類のログがあります。分類を確認してください。');
       return summary;
     }
 
-    function buildLocalSalarySummary(month) {
+    function buildLocalSalarySummary(month, sourceLogs = localReadLogs()) {
       validateMonth(month);
       const summary = {
         month,
@@ -2331,14 +2359,18 @@
         workHourlyPay: WORK_HOURLY_PAY,
       };
 
-      localReadLogs().filter((log) => log.month === month).forEach((log) => {
+      sourceLogs.filter((log) => log.month === month).forEach((log) => {
         if (log.type === 'レッスン') {
           const lessonItems = getLogLessonItems(log);
-          const count = lessonItems.length || Number(log.koma || 0);
-          const campCount = lessonItems.filter((item) => getLessonBillingCategoryClient(item) === 'キャンプ').length;
-          summary.lessonKoma += count;
-          summary.campLessonKoma += campCount;
-          summary.normalLessonKoma += Math.max(0, count - campCount);
+          lessonItems.forEach((item) => {
+            const category = getLessonBillingCategoryClient(item);
+            summary.lessonKoma += 1;
+            if (category === 'キャンプ') {
+              summary.campLessonKoma += 1;
+            } else if (category === '通常コマ') {
+              summary.normalLessonKoma += 1;
+            }
+          });
           return;
         }
         if (log.type === '講師外業務' && log.end) {
@@ -2350,7 +2382,7 @@
       summary.lessonPay =
         (summary.normalLessonKoma * LESSON_PAY_PER_KOMA) +
         (summary.campLessonKoma * CAMP_LESSON_PAY_PER_KOMA);
-      summary.workPay = Math.round(Number(summary.workHours) * WORK_HOURLY_PAY);
+      summary.workPay = Math.round((summary.workMinutes * WORK_HOURLY_PAY) / 60);
       summary.totalPay = summary.lessonPay + summary.workPay;
       return summary;
     }

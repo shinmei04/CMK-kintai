@@ -97,7 +97,7 @@ const COL = {
 };
 
 function doGet() {
-  setup();
+  ensureSheets_();
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('勤怠・請求メモ')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
@@ -115,10 +115,10 @@ function setup() {
   ss.setSpreadsheetTimeZone(APP_CONFIG.timeZone);
 
   const logSheet = ss.getSheetByName(APP_CONFIG.logSheetName) || ss.insertSheet(APP_CONFIG.logSheetName);
-  prepareLogSheet_(logSheet);
+  prepareLogSheet_(logSheet, true);
 
   const summarySheet = ss.getSheetByName(APP_CONFIG.summarySheetName) || ss.insertSheet(APP_CONFIG.summarySheetName);
-  prepareSummarySheet_(summarySheet);
+  prepareSummarySheet_(summarySheet, true);
 
   return {
     ok: true,
@@ -127,12 +127,16 @@ function setup() {
 }
 
 function getInitialData() {
-  setup();
+  ensureSheets_();
   const now = new Date();
+  const currentMonth = formatDate_(now, 'yyyy-MM');
+  const target = parseMonth_(currentMonth);
+  const logs = readLogObjects_();
+  const monthlySummary = buildMonthlySummaryFromLogs_(target, logs);
   return {
     todayIso: formatDate_(now, 'yyyy-MM-dd'),
     todayDisplay: formatDate_(now, 'yyyy年M月d日'),
-    currentMonth: formatDate_(now, 'yyyy-MM'),
+    currentMonth: currentMonth,
     lessonCategories: APP_CONFIG.lessonCategories,
     workCategories: APP_CONFIG.workCategories,
     lessonItemOptions: APP_CONFIG.lessonItemOptions,
@@ -141,9 +145,9 @@ function getInitialData() {
     lessonContentLabels: APP_CONFIG.lessonContentLabels,
     lessonQuickItems: APP_CONFIG.lessonItemOptions,
     workQuickItems: getWorkQuickItems_(),
-    activeWork: findActiveWork_(),
-    recentLogs: getRecentLogs_(5),
-    salarySummary: buildSalarySummary_(formatDate_(now, 'yyyy-MM')),
+    activeWork: findActiveWorkFromLogs_(logs),
+    historyLogs: getLogsByMonthFromLogs_(target.monthValue, logs),
+    monthlySummary: monthlySummary,
   };
 }
 
@@ -162,7 +166,7 @@ function saveWorkQuickItems(items) {
 
 function saveLesson(payload) {
   return withLock_(function () {
-    setup();
+    ensureSheets_();
     const date = parseDateInput_(payload.date) || dateOnly_(new Date());
     const lessonItems = normalizeLessonItems_(payload.lessonItems);
     const category = getLessonCategoryByItems_(lessonItems);
@@ -193,22 +197,20 @@ function saveLesson(payload) {
       now,
       now,
     ];
-    getLogSheet_().appendRow(row);
-    applySheetFormats_();
+    const sheet = getLogSheet_();
+    const rowNumber = appendLogRow_(sheet, row);
+    applyLogRowFormats_(sheet, rowNumber);
 
     return {
       ok: true,
       message: 'レッスンを保存しました',
-      activeWork: findActiveWork_(),
-      recentLogs: getRecentLogs_(5),
-      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
     };
   });
 }
 
 function startWork(payload) {
   return withLock_(function () {
-    setup();
+    ensureSheets_();
     const active = findActiveWork_();
     if (active) {
       throw new Error('未終了の講師外業務があるため、先に終了してください');
@@ -241,21 +243,20 @@ function startWork(payload) {
       now,
       now,
     ];
-    getLogSheet_().appendRow(row);
-    applySheetFormats_();
+    const sheet = getLogSheet_();
+    const rowNumber = appendLogRow_(sheet, row);
+    applyLogRowFormats_(sheet, rowNumber);
 
     return {
       ok: true,
       message: '出勤しました',
-      activeWork: findActiveWork_(),
-      recentLogs: getRecentLogs_(5),
-      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
+      activeWork: toClientLog_(rowToLog_(row, rowNumber)),
     };
   });
 }
 
 function prepareFinishWork() {
-  setup();
+  ensureSheets_();
   const active = findActiveWork_();
   if (!active) {
     throw new Error('開始中の講師外業務がありません');
@@ -270,7 +271,7 @@ function prepareFinishWork() {
 
 function finishWork(payload) {
   return withLock_(function () {
-    setup();
+    ensureSheets_();
     const activeRow = findActiveWorkRow_();
     if (!activeRow) {
       throw new Error('開始中の講師外業務がありません');
@@ -278,6 +279,7 @@ function finishWork(payload) {
 
     payload = payload || {};
     const endAt = payload.endIso ? parseLocalDateTime_(payload.endIso) : new Date();
+    endAt.setSeconds(0, 0);
     const startAt = buildDateTime_(activeRow.values[COL.date - 1], activeRow.values[COL.start - 1]);
 
     if (!startAt) {
@@ -291,35 +293,35 @@ function finishWork(payload) {
     const hours = roundHours_(minutes);
     const sheet = getLogSheet_();
     const row = activeRow.rowNumber;
+    const values = activeRow.values.slice();
 
-    sheet.getRange(row, COL.end).setValue(formatDate_(endAt, 'HH:mm'));
+    values[COL.end - 1] = formatDate_(endAt, 'HH:mm');
     if (payload.content) {
-      sheet.getRange(row, COL.content).setValue(trim_(payload.content));
+      values[COL.content - 1] = trim_(payload.content);
     }
     if (payload.category) {
-      sheet.getRange(row, COL.category).setValue(assertInList_(payload.category, APP_CONFIG.workCategories, '講師外業務分類'));
+      values[COL.category - 1] = assertInList_(payload.category, APP_CONFIG.workCategories, '講師外業務分類');
     }
     if (payload.note) {
-      sheet.getRange(row, COL.note).setValue(trim_(payload.note));
+      values[COL.note - 1] = trim_(payload.note);
     }
-    sheet.getRange(row, COL.minutes).setValue(minutes);
-    sheet.getRange(row, COL.hours).setValue(hours);
-    sheet.getRange(row, COL.updatedAt).setValue(new Date());
-    applySheetFormats_();
+    values[COL.minutes - 1] = minutes;
+    values[COL.hours - 1] = hours;
+    values[COL.updatedAt - 1] = new Date();
+    sheet.getRange(row, 1, 1, APP_CONFIG.headers.length).setValues([values]);
+    applyLogRowFormats_(sheet, row);
 
     return {
       ok: true,
       message: '退勤しました',
-      activeWork: findActiveWork_(),
-      recentLogs: getRecentLogs_(5),
-      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
+      activeWork: null,
     };
   });
 }
 
 function cancelActiveWork() {
   return withLock_(function () {
-    setup();
+    ensureSheets_();
     const activeRow = findActiveWorkRow_();
     if (!activeRow) {
       throw new Error('取り消せる未退勤の出勤がありません');
@@ -329,16 +331,14 @@ function cancelActiveWork() {
     return {
       ok: true,
       message: '出勤を取り消しました',
-      activeWork: findActiveWork_(),
-      recentLogs: getRecentLogs_(5),
-      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
+      activeWork: null,
     };
   });
 }
 
 function deleteLog(id) {
   return withLock_(function () {
-    setup();
+    ensureSheets_();
     const found = findRowById_(id);
     if (!found) {
       throw new Error('削除対象のログが見つかりません');
@@ -348,15 +348,13 @@ function deleteLog(id) {
       ok: true,
       message: 'ログを削除しました',
       activeWork: findActiveWork_(),
-      recentLogs: getRecentLogs_(5),
-      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
     };
   });
 }
 
 function updateLog(payload) {
   return withLock_(function () {
-    setup();
+    ensureSheets_();
     payload = payload || {};
     const found = findRowById_(payload.id);
     if (!found) {
@@ -390,7 +388,7 @@ function updateLog(payload) {
       const lessonContent = lessonItems.join(' / ');
       const category = getLessonCategoryByItems_(lessonItems);
 
-      sheet.getRange(row, COL.date, 1, 9).setValues([[
+      found.values.splice(COL.date - 1, 9,
         date,
         '',
         '',
@@ -399,8 +397,8 @@ function updateLog(payload) {
         koma,
         '',
         '',
-        note,
-      ]]);
+        note
+      );
     } else if (type === APP_CONFIG.workType) {
       const start = normalizeTimeText_(payload.start);
       const end = normalizeTimeText_(payload.end);
@@ -427,7 +425,7 @@ function updateLog(payload) {
         hours = roundHours_(minutes);
       }
 
-      sheet.getRange(row, COL.date, 1, 9).setValues([[
+      found.values.splice(COL.date - 1, 9,
         date,
         start,
         end,
@@ -436,31 +434,34 @@ function updateLog(payload) {
         '',
         minutes,
         hours,
-        note,
-      ]]);
+        note
+      );
     } else {
       throw new Error('不明な種別のログです');
     }
 
-    sheet.getRange(row, COL.updatedAt).setValue(new Date());
-    applySheetFormats_();
+    found.values[COL.updatedAt - 1] = new Date();
+    sheet.getRange(row, 1, 1, APP_CONFIG.headers.length).setValues([found.values]);
+    applyLogRowFormats_(sheet, row);
 
     return {
       ok: true,
       message: 'ログを更新しました',
       activeWork: findActiveWork_(),
-      recentLogs: getRecentLogs_(5),
-      salarySummary: buildSalarySummary_(formatDate_(new Date(), 'yyyy-MM')),
     };
   });
 }
 
 function getLogsByMonth(month) {
-  setup();
+  ensureSheets_();
   const target = parseMonth_(month);
-  return readLogObjects_()
+  return getLogsByMonthFromLogs_(target.monthValue, readLogObjects_());
+}
+
+function getLogsByMonthFromLogs_(month, logs) {
+  return logs
     .filter(function (log) {
-      return log.month === target.monthValue;
+      return log.month === month;
     })
     .sort(function (a, b) {
       const dateCompare = String(b.dateIso || '').localeCompare(String(a.dateIso || ''));
@@ -475,9 +476,15 @@ function getLogsByMonth(month) {
 }
 
 function getMonthlySummary(month) {
-  setup();
+  ensureSheets_();
   const target = parseMonth_(month);
   const logs = readLogObjects_();
+  const summary = buildMonthlySummaryFromLogs_(target, logs);
+  writeMonthlySummary_(summary);
+  return summary;
+}
+
+function buildMonthlySummaryFromLogs_(target, logs) {
   const summary = createEmptySummary_(target);
 
   logs.forEach(function (log) {
@@ -496,13 +503,16 @@ function getMonthlySummary(month) {
   });
 
   finalizeSummary_(summary);
-  summary.salarySummary = buildSalarySummary_(target.monthValue);
-  writeMonthlySummary_(summary);
+  summary.salarySummary = buildSalarySummaryFromLogs_(target, logs);
   return summary;
 }
 
 function buildSalarySummary_(month) {
   const target = parseMonth_(month);
+  return buildSalarySummaryFromLogs_(target, readLogObjects_());
+}
+
+function buildSalarySummaryFromLogs_(target, logs) {
   const summary = {
     month: target.monthValue,
     monthLabel: target.monthLabel,
@@ -519,23 +529,22 @@ function buildSalarySummary_(month) {
     workHourlyPay: APP_CONFIG.workHourlyPay,
   };
 
-  readLogObjects_().forEach(function (log) {
+  logs.forEach(function (log) {
     if (log.month !== target.monthValue) {
       return;
     }
 
     if (log.type === APP_CONFIG.lessonType) {
       const contents = extractLessonContents_(log);
-      const count = contents.length || Number(log.koma || 0);
-      let campCount = 0;
       contents.forEach(function (content) {
-        if (getLessonBillingCategory_(content) === 'キャンプ') {
-          campCount += 1;
+        const category = getLessonBillingCategory_(content);
+        summary.lessonKoma += 1;
+        if (category === 'キャンプ') {
+          summary.campLessonKoma += 1;
+        } else if (category === '通常コマ') {
+          summary.normalLessonKoma += 1;
         }
       });
-      summary.lessonKoma += count;
-      summary.campLessonKoma += campCount;
-      summary.normalLessonKoma += Math.max(0, count - campCount);
       return;
     }
 
@@ -559,27 +568,41 @@ function buildSalarySummary_(month) {
   summary.lessonPay =
     (summary.normalLessonKoma * APP_CONFIG.lessonPayPerKoma) +
     (summary.campLessonKoma * APP_CONFIG.campLessonPayPerKoma);
-  summary.workPay = Math.round(Number(summary.workHours) * APP_CONFIG.workHourlyPay);
+  summary.workPay = Math.round((summary.workMinutes * APP_CONFIG.workHourlyPay) / 60);
   summary.totalPay = summary.lessonPay + summary.workPay;
   return summary;
 }
 
-function prepareLogSheet_(sheet) {
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(APP_CONFIG.headers);
-  } else {
-    sheet.getRange(1, 1, 1, APP_CONFIG.headers.length).setValues([APP_CONFIG.headers]);
-  }
-  sheet.setFrozenRows(1);
-  applySheetFormats_();
+function ensureSheets_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const logSheet = ss.getSheetByName(APP_CONFIG.logSheetName) || ss.insertSheet(APP_CONFIG.logSheetName);
+  const summarySheet = ss.getSheetByName(APP_CONFIG.summarySheetName) || ss.insertSheet(APP_CONFIG.summarySheetName);
+  prepareLogSheet_(logSheet, false);
+  prepareSummarySheet_(summarySheet, false);
 }
 
-function prepareSummarySheet_(sheet) {
-  if (sheet.getLastRow() === 0) {
+function prepareLogSheet_(sheet, forceFormatting) {
+  const isEmpty = sheet.getLastRow() === 0;
+  if (isEmpty) {
+    sheet.appendRow(APP_CONFIG.headers);
+  } else if (forceFormatting) {
+    sheet.getRange(1, 1, 1, APP_CONFIG.headers.length).setValues([APP_CONFIG.headers]);
+  }
+  if (isEmpty || forceFormatting) {
+    sheet.setFrozenRows(1);
+    applySheetFormats_();
+  }
+}
+
+function prepareSummarySheet_(sheet, forceFormatting) {
+  const isEmpty = sheet.getLastRow() === 0;
+  if (isEmpty) {
     sheet.getRange(1, 1, 1, 2).setValues([['項目', '値']]);
   }
-  sheet.setFrozenRows(1);
-  sheet.autoResizeColumns(1, 8);
+  if (isEmpty || forceFormatting) {
+    sheet.setFrozenRows(1);
+    sheet.autoResizeColumns(1, 8);
+  }
 }
 
 function getWorkQuickItems_() {
@@ -709,12 +732,36 @@ function applySheetFormats_() {
   if (!sheet) {
     return;
   }
-  const maxRows = Math.max(sheet.getMaxRows() - 1, 1);
-  sheet.getRange(2, COL.date, maxRows, 1).setNumberFormat('yyyy/mm/dd');
-  sheet.getRange(2, COL.minutes, maxRows, 1).setNumberFormat('0');
-  sheet.getRange(2, COL.hours, maxRows, 1).setNumberFormat('0.00');
-  sheet.getRange(2, COL.createdAt, maxRows, 2).setNumberFormat('yyyy/mm/dd hh:mm');
+  const dataRows = Math.max(sheet.getLastRow() - 1, 1);
+  sheet.getRange(2, COL.date, dataRows, 1).setNumberFormat('yyyy/mm/dd');
+  sheet.getRange(2, COL.minutes, dataRows, 1).setNumberFormat('0');
+  sheet.getRange(2, COL.hours, dataRows, 1).setNumberFormat('0.00');
+  sheet.getRange(2, COL.createdAt, dataRows, 2).setNumberFormat('yyyy/mm/dd hh:mm');
   sheet.autoResizeColumns(1, APP_CONFIG.headers.length);
+}
+
+function applyLogRowFormats_(sheet, rowNumber) {
+  sheet.getRange(rowNumber, 1, 1, APP_CONFIG.headers.length).setNumberFormats([[
+    '@',
+    '@',
+    'yyyy/mm/dd',
+    '@',
+    '@',
+    '@',
+    '@',
+    '0',
+    '0',
+    '0.00',
+    '@',
+    'yyyy/mm/dd hh:mm',
+    'yyyy/mm/dd hh:mm',
+  ]]);
+}
+
+function appendLogRow_(sheet, values) {
+  const rowNumber = sheet.getLastRow() + 1;
+  sheet.getRange(rowNumber, 1, 1, APP_CONFIG.headers.length).setValues([values]);
+  return rowNumber;
 }
 
 function readLogObjects_() {
@@ -805,7 +852,14 @@ function getLogSortMinutes_(log) {
 
 function findActiveWork_() {
   const activeRow = findActiveWorkRow_();
-  return activeRow ? rowToLog_(activeRow.values, activeRow.rowNumber) : null;
+  return activeRow ? toClientLog_(rowToLog_(activeRow.values, activeRow.rowNumber)) : null;
+}
+
+function findActiveWorkFromLogs_(logs) {
+  const active = logs.find(function (log) {
+    return log.isActive;
+  });
+  return active ? toClientLog_(active) : null;
 }
 
 function findActiveWorkRow_() {
@@ -964,7 +1018,7 @@ function finalizeSummary_(summary) {
 
 function writeMonthlySummary_(summary) {
   const sheet = getSummarySheet_();
-  sheet.clearContents();
+  sheet.getDataRange().clearContent();
 
   const rows = [
     ['項目', '値'],
@@ -1009,7 +1063,6 @@ function writeMonthlySummary_(summary) {
 
   sheet.getRange(1, 1, padded.length, width).setValues(padded);
   sheet.getRange(1, 1, 1, width).setFontWeight('bold');
-  sheet.autoResizeColumns(1, width);
 }
 
 function parseMonth_(month) {
