@@ -151,6 +151,17 @@ function getInitialData() {
   };
 }
 
+function getCurrentStatus() {
+  ensureSheets_();
+  const now = new Date();
+  return {
+    todayIso: formatDate_(now, 'yyyy-MM-dd'),
+    todayDisplay: formatDate_(now, 'yyyy年M月d日'),
+    currentMonth: formatDate_(now, 'yyyy-MM'),
+    activeWork: findActiveWork_(),
+  };
+}
+
 function saveWorkQuickItems(items) {
   const normalized = normalizeWorkQuickItems_(items);
   PropertiesService.getUserProperties().setProperty(
@@ -167,7 +178,8 @@ function saveWorkQuickItems(items) {
 function saveLesson(payload) {
   return withLock_(function () {
     ensureSheets_();
-    const date = parseDateInput_(payload.date) || dateOnly_(new Date());
+    payload = payload || {};
+    const date = parseDateInput_(formatDate_(new Date(), 'yyyy-MM-dd'));
     const lessonItems = normalizeLessonItems_(payload.lessonItems);
     const category = getLessonCategoryByItems_(lessonItems);
     const koma = Number(payload.koma);
@@ -228,10 +240,11 @@ function startWork(payload) {
     }
 
     const now = new Date();
+    const today = parseDateInput_(formatDate_(now, 'yyyy-MM-dd'));
     const row = [
       createId_(),
       APP_CONFIG.workType,
-      dateOnly_(now),
+      today,
       formatDate_(now, 'HH:mm'),
       '',
       content,
@@ -414,15 +427,24 @@ function updateLog(payload) {
       let hours = '';
       if (end) {
         const startAt = buildDateTime_(date, start);
-        const endAt = buildDateTime_(date, end);
+        const endDate = payload.endDate ? parseDateInput_(payload.endDate) : dateOnly_(date);
+        if (!endDate) {
+          throw new Error('終了日を入力してください');
+        }
+        const endAt = buildDateTime_(endDate, end);
         if (!startAt || !endAt) {
           throw new Error('勤務時間を計算できませんでした');
         }
         if (endAt.getTime() < startAt.getTime()) {
+          if (payload.endDate) {
+            throw new Error('終了日時は開始日時以降にしてください');
+          }
           endAt.setDate(endAt.getDate() + 1);
         }
         minutes = Math.round((endAt.getTime() - startAt.getTime()) / 60000);
         hours = roundHours_(minutes);
+      } else if (hasOtherActiveWork_(payload.id)) {
+        throw new Error('別の未退勤ログがあるため、終了時刻を空欄にできません');
       }
 
       found.values.splice(COL.date - 1, 9,
@@ -882,6 +904,24 @@ function findActiveWorkRow_() {
   return null;
 }
 
+function hasOtherActiveWork_(excludeId) {
+  const sheet = getLogSheet_();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return false;
+  }
+
+  return sheet
+    .getRange(2, 1, lastRow - 1, APP_CONFIG.headers.length)
+    .getValues()
+    .some(function (row) {
+      return row[COL.type - 1] === APP_CONFIG.workType &&
+        row[COL.start - 1] &&
+        !row[COL.end - 1] &&
+        String(row[COL.id - 1]) !== String(excludeId);
+    });
+}
+
 function findRowById_(id) {
   const sheet = getLogSheet_();
   const lastRow = sheet.getLastRow();
@@ -1092,7 +1132,14 @@ function parseDateInput_(value) {
   if (!match) {
     return null;
   }
-  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(year, month - 1, day);
+  if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) {
+    return null;
+  }
+  return parsed;
 }
 
 function parseLocalDateTime_(value) {
@@ -1100,14 +1147,14 @@ function parseLocalDateTime_(value) {
   if (!match) {
     throw new Error('終了時刻を読み取れませんでした');
   }
-  return new Date(
-    Number(match[1]),
-    Number(match[2]) - 1,
-    Number(match[3]),
-    Number(match[4]),
-    Number(match[5]),
-    Number(match[6] || 0)
-  );
+  const date = parseDateInput_(match[1] + '-' + match[2] + '-' + match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6] || 0);
+  if (!date || hour > 23 || minute > 59 || second > 59) {
+    throw new Error('終了時刻を読み取れませんでした');
+  }
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute, second);
 }
 
 function buildDateTime_(dateValue, timeValue) {

@@ -1111,6 +1111,11 @@
       summaryDirty: false,
       historyLoadedMonth: '',
       summaryLoadedMonth: '',
+      historyRequestId: 0,
+      summaryRequestId: 0,
+      busyDepth: 0,
+      loaded: false,
+      lastResumeRefresh: 0,
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1140,6 +1145,10 @@
       $('editQuickItemsFromContentButton').addEventListener('click', openQuickItemsDialog);
       $('closeQuickItemsButton').addEventListener('click', closeQuickItemsDialog);
       $('saveQuickItemsButton').addEventListener('click', saveQuickItems);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) refreshOnResume();
+      });
+      window.addEventListener('focus', refreshOnResume);
     }
 
     async function loadApp() {
@@ -1170,10 +1179,37 @@
         } else {
           await loadMonthlySummary(data.currentMonth, { silent: true });
         }
+        state.loaded = true;
       } catch (error) {
         showError(error);
       } finally {
         setBusy(false);
+      }
+    }
+
+    async function refreshOnResume() {
+      const now = Date.now();
+      if (!state.loaded || state.busy || document.hidden || now - state.lastResumeRefresh < 1000) return;
+      state.lastResumeRefresh = now;
+      try {
+        const previousMonth = state.currentMonth;
+        const data = await gas('getCurrentStatus');
+        state.todayIso = data.todayIso;
+        state.currentMonth = data.currentMonth;
+        state.activeWork = data.activeWork || null;
+        $('todayLabel').textContent = addWeekdayToDisplay(data.todayIso, data.todayDisplay);
+
+        if ($('historyMonth').value === previousMonth) $('historyMonth').value = data.currentMonth;
+        if ($('summaryMonth').value === previousMonth) $('summaryMonth').value = data.currentMonth;
+        renderToday();
+
+        if (state.currentTab === 'history') {
+          await loadHistoryMonth($('historyMonth').value || data.currentMonth, { silent: true });
+        } else if (state.currentTab === 'summary') {
+          await loadMonthlySummary($('summaryMonth').value || data.currentMonth, { silent: true });
+        }
+      } catch (error) {
+        showError(error);
       }
     }
 
@@ -1209,10 +1245,10 @@
       });
       const historyMonth = $('historyMonth').value || state.currentMonth;
       const summaryMonth = $('summaryMonth').value || state.currentMonth;
-      if (tabName === 'history' && (state.historyDirty || state.historyLoadedMonth !== historyMonth)) {
+      if (tabName === 'history') {
         loadHistoryMonth(historyMonth);
       }
-      if (tabName === 'summary' && (state.summaryDirty || state.summaryLoadedMonth !== summaryMonth)) {
+      if (tabName === 'summary') {
         loadMonthlySummary(summaryMonth);
       }
     }
@@ -1356,7 +1392,10 @@
       }
     }
 
-    function renderLessonItemRows() {
+    function renderLessonItemRows(preservedValues) {
+      const previousValues = Array.isArray(preservedValues)
+        ? preservedValues
+        : Array.from(document.querySelectorAll('.lesson-item-select')).map((select) => select.value);
       const count = clampKoma($('lessonKoma').value);
       $('lessonKoma').value = String(count);
       const container = $('lessonItems');
@@ -1369,6 +1408,9 @@
           ariaLabel: `${index + 1}コマ目`,
         });
         fillSelect(select, state.lessonItemOptions);
+        if (state.lessonItemOptions.includes(previousValues[index])) {
+          select.value = previousValues[index];
+        }
         row.append(createEl('span', { className: 'list-label' }, `${index + 1}コマ目`), select);
         container.appendChild(row);
       }
@@ -1436,7 +1478,7 @@
         return;
       }
       const payload = {
-        date: state.todayIso,
+        date: toDateIso(new Date()),
         koma,
         lessonItems,
         content: lessonItems.join(' / '),
@@ -1447,7 +1489,7 @@
         setBusy(true);
         const result = await gas('saveLesson', payload);
         $('lessonKoma').value = '1';
-        renderLessonItemRows();
+        renderLessonItemRows([]);
         await refreshAfterMutation(result, '講師業務を登録しました');
       } catch (error) {
         showError(error);
@@ -1488,9 +1530,12 @@
 
     async function loadHistoryMonth(month, options = {}) {
       if (!month) return;
+      const requestId = ++state.historyRequestId;
       try {
         if (!options.silent) setBusy(true);
-        state.historyLogs = await gas('getLogsByMonth', month);
+        const logs = await gas('getLogsByMonth', month);
+        if (requestId !== state.historyRequestId || $('historyMonth').value !== month) return;
+        state.historyLogs = logs;
         state.historyDirty = false;
         state.historyLoadedMonth = month;
         renderHistoryLogs();
@@ -1553,9 +1598,11 @@
 
     async function loadMonthlySummary(month, options = {}) {
       if (!month) return;
+      const requestId = ++state.summaryRequestId;
       try {
         if (!options.silent) setBusy(true);
         const summary = await gas('getMonthlySummary', month);
+        if (requestId !== state.summaryRequestId || $('summaryMonth').value !== month) return;
         state.summary = summary;
         state.summaryDirty = false;
         state.summaryLoadedMonth = month;
@@ -1672,6 +1719,7 @@
 
     function renderWorkEditFields(log) {
       const fragment = document.createDocumentFragment();
+      const endDateIso = getWorkEndDateIso(log);
       const dateGroup = createEl('section', { className: 'edit-section' });
       dateGroup.append(
         createEl('h3', { className: 'section-title' }, '日付'),
@@ -1689,6 +1737,7 @@
         createEl('h3', { className: 'section-title' }, '勤務時間'),
         createEl('div', { className: 'group-list' }, [
           editInputRow('editStart', '開始', 'time', log.start || ''),
+          editInputRow('editEndDate', '終了日', 'date', endDateIso),
           editInputRow('editEnd', '終了', 'time', log.end || ''),
           totalRow,
         ])
@@ -1783,7 +1832,7 @@
     }
 
     function bindWorkTotalUpdater() {
-      ['editDate', 'editStart', 'editEnd'].forEach((id) => {
+      ['editDate', 'editStart', 'editEndDate', 'editEnd'].forEach((id) => {
         const input = $(id);
         if (input) input.addEventListener('input', updateEditWorkTotal);
       });
@@ -1793,8 +1842,17 @@
     function updateEditWorkTotal() {
       const target = $('editWorkTotal');
       if (!target) return;
-      const minutes = calculateWorkMinutes($('editDate').value, $('editStart').value, $('editEnd').value);
-      target.textContent = minutes === null ? '未計算' : formatDuration(minutes);
+      const minutes = calculateWorkMinutes(
+        $('editDate').value,
+        $('editStart').value,
+        $('editEnd').value,
+        $('editEndDate').value
+      );
+      target.textContent = minutes === null
+        ? '未計算'
+        : minutes < 0
+          ? '終了日時を確認'
+          : formatDuration(minutes);
     }
 
     async function saveEditedLog() {
@@ -1845,6 +1903,7 @@
 
       const start = $('editStart').value;
       const end = $('editEnd').value;
+      const endDate = $('editEndDate').value;
       const content = $('editContent').value.trim();
       const category = $('editCategory').value;
       if (!start) {
@@ -1855,15 +1914,35 @@
         $('editSheetError').textContent = '終了済みの講師外業務は内容と分類を入力してください';
         return null;
       }
+      if (end && !endDate) {
+        $('editSheetError').textContent = '終了日を入力してください';
+        return null;
+      }
       return {
         id: log.id,
         date,
         start,
         end,
+        endDate,
         content,
         category,
         note: $('editNote').value,
       };
+    }
+
+    function getWorkEndDateIso(log) {
+      if (!log || !log.dateIso) return state.todayIso;
+      if (!log.end) return log.dateIso;
+      const startAt = buildClientDateTime(log.dateIso, log.start);
+      const storedMinutes = Number(log.minutes);
+      if (startAt && log.minutes !== '' && Number.isFinite(storedMinutes) && storedMinutes >= 0) {
+        return toDateIso(new Date(startAt.getTime() + storedMinutes * 60000));
+      }
+      const endAt = buildClientDateTime(log.dateIso, log.end);
+      if (startAt && endAt && endAt.getTime() < startAt.getTime()) {
+        endAt.setDate(endAt.getDate() + 1);
+      }
+      return endAt ? toDateIso(endAt) : log.dateIso;
     }
 
     function getEditLessonItemValues() {
@@ -2004,6 +2083,16 @@
         };
       },
 
+      getCurrentStatus() {
+        const now = new Date();
+        return {
+          todayIso: toDateIso(now),
+          todayDisplay: toJapaneseDate(now),
+          currentMonth: toMonthValue(now),
+          activeWork: localFindActiveWork(),
+        };
+      },
+
       saveWorkQuickItems(items) {
         const normalized = normalizeQuickItemsClient(items);
         localStorage.setItem(LOCAL_QUICK_ITEMS_KEY, JSON.stringify(normalized));
@@ -2016,7 +2105,7 @@
 
       saveLesson(payload) {
         const logs = localReadLogs();
-        const dateIso = payload.date || toDateIso(new Date());
+        const dateIso = toDateIso(new Date());
         const lessonItems = normalizeLessonItemsClient(payload.lessonItems || []);
         const koma = Number(payload.koma || lessonItems.length);
         validateLessonPayload(koma, lessonItems);
@@ -2081,8 +2170,12 @@
           throw new Error('開始中の講師外業務がありません');
         }
         const now = new Date();
+        const startAt = buildClientDateTime(active.dateIso, active.start);
+        if (!startAt || now.getTime() < startAt.getTime()) {
+          throw new Error('開始時刻を読み取れませんでした');
+        }
         active.end = toTimeText(now);
-        active.minutes = calculateWorkMinutes(active.dateIso, active.start, active.end) || 0;
+        active.minutes = Math.round((now.getTime() - startAt.getTime()) / 60000);
         active.hours = roundHoursClient(active.minutes).toFixed(2);
         active.isActive = false;
         active.updatedDisplay = toDateTimeDisplay(now);
@@ -2119,7 +2212,7 @@
         if (!log) {
           throw new Error('編集対象のログが見つかりません');
         }
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.date || '')) {
+        if (!isValidDateIso(payload.date)) {
           throw new Error('日付を入力してください');
         }
         const now = new Date();
@@ -2152,11 +2245,24 @@
           log.note = String(payload.note || '').trim();
           log.isActive = Boolean(start && !end);
           if (end) {
-            const minutes = calculateWorkMinutes(log.dateIso, start, end);
+            if (!isValidDateIso(payload.endDate)) {
+              throw new Error('終了日を入力してください');
+            }
+            const minutes = calculateWorkMinutes(log.dateIso, start, end, payload.endDate);
             if (minutes === null) throw new Error('勤務時間を計算できませんでした');
+            if (minutes < 0) throw new Error('終了日時は開始日時以降にしてください');
             log.minutes = minutes;
             log.hours = roundHoursClient(minutes).toFixed(2);
           } else {
+            const otherActive = logs.some((item) =>
+              String(item.id) !== String(log.id) &&
+              item.type === '講師外業務' &&
+              item.start &&
+              !item.end
+            );
+            if (otherActive) {
+              throw new Error('別の未退勤ログがあるため、終了時刻を空欄にできません');
+            }
             log.minutes = '';
             log.hours = '';
           }
@@ -2450,19 +2556,19 @@
       return calculateWorkMinutes(log.dateIso, log.start, log.end) || 0;
     }
 
-    function calculateWorkMinutes(dateIso, start, end) {
+    function calculateWorkMinutes(dateIso, start, end, endDateIso = '') {
       if (!dateIso || !start || !end) return null;
       const startAt = buildClientDateTime(dateIso, start);
-      const endAt = buildClientDateTime(dateIso, end);
+      const endAt = buildClientDateTime(endDateIso || dateIso, end);
       if (!startAt || !endAt) return null;
-      if (endAt.getTime() < startAt.getTime()) {
+      if (!endDateIso && endAt.getTime() < startAt.getTime()) {
         endAt.setDate(endAt.getDate() + 1);
       }
       return Math.round((endAt.getTime() - startAt.getTime()) / 60000);
     }
 
     function buildClientDateTime(dateIso, timeText) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso || '') || !normalizeTimeTextClient(timeText)) {
+      if (!isValidDateIso(dateIso) || !normalizeTimeTextClient(timeText)) {
         return null;
       }
       const [year, month, day] = dateIso.split('-').map(Number);
@@ -2480,9 +2586,20 @@
     }
 
     function validateMonth(month) {
-      if (!/^\d{4}-\d{2}$/.test(month || '')) {
+      const match = String(month || '').match(/^(\d{4})-(\d{2})$/);
+      if (!match || Number(match[2]) < 1 || Number(match[2]) > 12) {
         throw new Error('対象月を選択してください');
       }
+    }
+
+    function isValidDateIso(value) {
+      const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!match) return false;
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      const date = new Date(year, month - 1, day);
+      return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
     }
 
     function normalizeLessonItemsClient(items) {
@@ -2648,12 +2765,13 @@
     }
 
     function setBusy(isBusy) {
-      state.busy = isBusy;
+      state.busyDepth = Math.max(0, state.busyDepth + (isBusy ? 1 : -1));
+      state.busy = state.busyDepth > 0;
       document.querySelectorAll('button:not([data-tab])').forEach((button) => {
         if (button.id === 'saveEditButton' || button.id === 'cancelEditButton' || button.id === 'deleteLogButton') return;
-        button.disabled = isBusy;
+        button.disabled = state.busy;
       });
-      $('copyTextButton').disabled = isBusy || !state.summary;
+      $('copyTextButton').disabled = state.busy || !state.summary;
     }
 
     function showToast(message, isError = false) {
