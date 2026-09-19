@@ -76,7 +76,7 @@ const APP_CONFIG = {
   defaultWorkQuickItems: ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務'],
   maxWorkQuickItems: 4,
   lessonPayPerKoma: 1800,
-  campLessonPayPerKoma: 2350,
+  campLessonPayPerKoma: 1950,
   workHourlyPay: 1226,
 };
 
