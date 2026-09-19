@@ -6,7 +6,9 @@ Googleアカウントと、このリポジトリにある `Code.gs`、`Index.htm
 
 1. [Googleスプレッドシート](https://sheets.google.com/)を開きます。
 2. 空白のスプレッドシートを新しく作成します。
-3. スプレッドシートの名前を `勤怠管理` に変更します。
+3. 必要に応じて、スプレッドシートの名前を `勤怠管理` に変更します。
+
+スプレッドシートの名前は処理には使用しないため、`勤怠管理` に変更しなくても問題ありません。分かりやすく管理するための任意の名前です。
 
 ## 2. Apps Scriptにコードを登録する
 
@@ -41,32 +43,34 @@ Googleアカウントと、このリポジトリにある `Code.gs`、`Index.htm
 
 設定を変更したら、Apps Scriptのコードを貼り替えて、もう一度デプロイしてください。
 
+以下の行番号は、現在のコードでの目安です。コードを編集すると行番号が変わる場合があります。
+
 ### クラスの種類を変更する
 
-`Code.gs` の先頭にある `COURSE_CONFIG` で変更します。
+`Code.gs` の1〜46行目にある `COURSE_CONFIG` で変更します。
 
 例えば、使用しない `CB` を選択肢から消す場合は、次の3か所から `CB` の行を削除します。
 
-- `lessonContentOptions`
-- `lessonBillingRules`
-- `lessonContentLabels`
+- `lessonContentOptions`（2〜14行目）
+- `lessonBillingRules`（15〜27行目）
+- `lessonContentLabels`（28〜40行目）
 
 クラスを追加する場合は、同じ3か所すべてに追加してください。
 
-PCテストモードでも同じ選択肢を使う場合は、`Index.html` の `LESSON_CONTENT_OPTIONS` と `LESSON_BILLING_RULES` からも同じクラスを削除します。クラスを追加する場合も、この2か所に追加してください。
+PCテストモードでも同じ選択肢を使う場合は、`Index.html` の `LESSON_CONTENT_OPTIONS`（1054〜1066行目）と `LESSON_BILLING_RULES`（1067〜1079行目）からも同じクラスを削除します。クラスを追加する場合も、この2か所に追加してください。
 
 ### 単価を変更する
 
-`Code.gs` の先頭にある `APP_CONFIG` で変更します。
+`Code.gs` の `APP_CONFIG` にある次の行を変更します。
 
-- `lessonPayPerKoma`: 通常の講師業務1コマあたりの単価
-- `campLessonPayPerKoma`: キャンプ1コマあたりの単価
-- `workHourlyPay`: 講師外業務の時給
+- `lessonPayPerKoma`（78行目）: 通常の講師業務1コマあたりの単価
+- `campLessonPayPerKoma`（79行目）: キャンプ1コマあたりの単価
+- `workHourlyPay`（80行目）: 講師外業務の時給
 
 PCテストモードでも同じ単価を使う場合は、`Index.html` にある次の値も変更します。
 
-- `LESSON_PAY_PER_KOMA`: 通常の講師業務1コマあたりの単価
-- `CAMP_LESSON_PAY_PER_KOMA`: キャンプ1コマあたりの単価
-- `WORK_HOURLY_PAY`: 講師外業務の時給
+- `LESSON_PAY_PER_KOMA`（1090行目）: 通常の講師業務1コマあたりの単価
+- `CAMP_LESSON_PAY_PER_KOMA`（1091行目）: キャンプ1コマあたりの単価
+- `WORK_HOURLY_PAY`（1092行目）: 講師外業務の時給
 
 現在の設定は、通常の講師業務が1コマ1,800円、キャンプが1コマ1,950円、講師外業務が時給1,226円です。
