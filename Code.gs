@@ -75,9 +75,9 @@ const APP_CONFIG = {
   workQuickItemsPropertyKey: 'workQuickItems',
   defaultWorkQuickItems: ['ULMTG', 'CBULMTG', 'チームMTG', 'UL業務'],
   maxWorkQuickItems: 4,
-  lessonPayPerKoma: 2200,
+  lessonPayPerKoma: 1800,
   campLessonPayPerKoma: 2350,
-  workHourlyPay: 1300,
+  workHourlyPay: 1226,
 };
 
 const COL = {
